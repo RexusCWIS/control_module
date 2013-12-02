@@ -11,6 +11,23 @@
 /** @brief Specifies that the data frame contains orders to the acquisition board. */
 #define ORDER   0xFF
 
+/** @brief Order to start the data acquisition. */
+#define START_ACQUISITION   'G'
+/** @brief Order to stop the data acquisition. */
+#define STOP_ACQUISITION    'S'
+
+
+/** @todo Fill those structures with the appropriate fields */
+/*
+typedef struct { 
+}PressureData_s;
+
+typedef struct {
+}TemperatureData_s; 
+
+typedef struct {
+}Status_s;
+*/
 
 #endif  /* DEF_I2C_FRAMES_H */
 
