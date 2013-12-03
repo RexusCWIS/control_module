@@ -18,16 +18,13 @@
 
 
 /** @todo Fill those structures with the appropriate fields */
-/*
-typedef struct { 
+typedef struct {
+    unsigned char data[2];
 }PressureData_s;
 
 typedef struct {
+    unsigned char data[2]; 
 }TemperatureData_s; 
-
-typedef struct {
-}Status_s;
-*/
 
 #endif  /* DEF_I2C_FRAMES_H */
 
