@@ -11,20 +11,31 @@
 /** @brief Specifies that the data frame contains orders to the acquisition board. */
 #define ORDER   0xFF
 
-/** @brief Order to start the data acquisition. */
-#define START_ACQUISITION   'G'
-/** @brief Order to stop the data acquisition. */
-#define STOP_ACQUISITION    'S'
-
-
-/** @todo Fill those structures with the appropriate fields */
 typedef struct {
     unsigned char data[2];
-}PressureData_s;
+}pressure_data_s;
 
 typedef struct {
     unsigned char data[2]; 
-}TemperatureData_s; 
+}temperature_data_s; 
+
+typedef enum {
+    START_ACQUISITION = 'G', 
+    STOP_ACQUISITION  = 'S'
+} i2c_order_e; 
+
+/**
+ * @brief I2C data frame.
+ * @details This frame represents the actual data sent over the I2C bus. 
+ *          All data are filled at acquisition time and are read when 
+ *          the I2C bus master performs a read operation. 
+ */
+typedef struct {
+    int time;                               /**< @brief Time at which data acquisition occured. */
+    temperature_data_s temperatures[3];     /**< @brief Temperature sensors data. */
+    pressure_data_s pressure;               /**< @brief Pressure sensor data. */
+    unsigned char status[2];                /**< @brief Control module status. */
+} i2c_frame_s; 
 
 #endif  /* DEF_I2C_FRAMES_H */
 
