@@ -72,7 +72,7 @@ void main(void)
 			ADCON0=SENSOR1;
 			GO = 1;
 			while(GO) {
-			    acquisition_data.temperatures[1] = (ADRESH << 8) + ADRESL;
+			    acquisition_data.temperatures[1] = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
 			}
 			
 			/* avg_cell=t_cell;
