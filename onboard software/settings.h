@@ -30,8 +30,8 @@
 
 // I2C macros //
 
-#define T0_RELOAD_HIGH  0xE1u
-#define T0_RELOAD_LOW   0x7Bu
+#define T0_RELOAD_HIGH  0xFDu
+#define T0_RELOAD_LOW   0x8Eu
 
 #define I2C_RX_FRAME_SIZE   32u
 #define I2C_TX_FRAME_SIZE   32u
@@ -112,9 +112,9 @@ void settings(void)
 	//TXIE=1; //Interrupt di trasmissione su seriale attivato (Non più usato)
 	
 	
-	//SETUP modulo TMR0//
-	T0CON=0b11000100; //Abilito TMR0 a 8bit su sorgente clock interna con incremento su fronte di salita e prescaler a 1:32
-	TMR0=100; //Imposto TMR0 in modo da avere l'overflow a 998,4Us
+	//SETUP modulo TMR0// setted in code
+	//T0CON=0b11000100; //Abilito TMR0 a 8bit su sorgente clock interna con incremento su fronte di salita e prescaler a 1:32
+	//TMR0=100; //Imposto TMR0 in modo da avere l'overflow a 998,4Us
 	
 	//SETUP modulo USART//
 	TXSTA=0b00100110; //Imposto trasmissione a 8bit, abilito trasmissione, imposto modalità asincrona, sync break a trasmissione completata, alta velocità

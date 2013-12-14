@@ -50,6 +50,7 @@ void main(void)
 	settings(); // Imposto le porte come da settings.h	
 	
 	i2c_slave_init(I2C_ADDRESS); //I2C Init
+	timer_init(); //TMR0 Init
 
 	
 	while(1)
@@ -387,7 +388,11 @@ void interrupt isr(void)
 {
 	if (TMR0IF) //Interrupt da TMR0
 	{
-		TMR0=100; //Reimposto TMR0
+		//Reset TMR0
+		TMR0H = T0_RELOAD_HIGH;
+        TMR0L = T0_RELOAD_LOW;
+        TMR0IF = 0;
+		
 		time++; //Global time
 		
 		if(LOstate)
@@ -516,4 +521,20 @@ void interrupt isr(void)
         SSPCON1bits.CKP = 1;    /* Release I2C clock */
         SSPIF = 0;              /* Clear I2C interrupt flag */
     }
+}
+
+static void timer_init(void) {
+
+    /* Set the internal oscillator to 8MHz */
+    OSCCON |= 0x70; 
+
+    /* Use timer 0 to generate an interrupt each second */
+    T0CONbits.TMR0ON = 0;   /* Disable timer */
+    T0CON &= ~0xF8;         /* Set the timer in 16-bit mode */
+    T0CON |= 0x7;           /* Set a 1:256 prescaler */
+
+    TMR0H = T0_RELOAD_HIGH;
+    TMR0L = T0_RELOAD_LOW;
+
+    T0CONbits.TMR0ON = 1;   /* Restart timer */
 }
