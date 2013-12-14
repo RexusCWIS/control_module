@@ -65,7 +65,7 @@ void main(void)
 			ADCON0 = SENSOR0;
             GO = 1; 
 			while(GO) {
-			    acquisition_data.temperatures[0] = (ADRESH << 8) + ADRESL;
+			    acquisition_data.temperatures[0] = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
 			}
 		
             /* Measure heater temperature */
