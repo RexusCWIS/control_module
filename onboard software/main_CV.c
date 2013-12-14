@@ -47,15 +47,14 @@ void main(void)
 {
 	
 
-	int LOenable=0, SODSenable=0, SOEenable=0, chconv=0, n_avg_cell=0, n_avg_heat=0;
-	unsigned int t_cell=0, t_heat=0, sum_cell=0, sum_heat=0, avg_cell=0, avg_heat=0, tr_heat=0;
+	int LOenable=0, SODSenable=0, SOEenable=0;
+	unsigned int t_cell=0, t_heat=0;
 	unsigned long time=0;
-	settings(); // Imposto le porte come da settings.h	
 	
-	i2c_slave_init(I2C_ADDRESS); //I2C Init
-	timer_init(); //TMR0 Init
+	settings();	/* Register Init */
+	i2c_slave_init(I2C_ADDRESS); /* I2C Init */
+	timer_init(); /* TMR0 Init */
 
-	
 	while(1)
 	{
         /* Sensor data acquisition loop */
@@ -74,18 +73,10 @@ void main(void)
 			while(GO) {
 			    acquisition_data.temperatures[1].data = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
 			}
-			
-			/* avg_cell=t_cell;
-			   avg_heat=t_heat; */
-			
-			//SOE_LED=SOE_LED^1;
-			//SODS_LED=SODS_LED^1;
-			//LO_LED=LO_LED^1;
 		}
-
-		
-		
-		if((LO)&&(!LOenable)) //LO Signal
+	
+		/* LO signal */
+		if((LO)&&(!LOenable))
 		{
 			ABstate=1;
 			if((LO)&&(!LOenable)&&(ABflag)) 
@@ -96,8 +87,12 @@ void main(void)
 				ABflag=0;
 			}
 		}
+		if(LOstate)
+		{
+		}
 		
-		if((SODS)&&(LOstate)&&(!SODSenable)) //SODS Signal
+		/* SODS signal */
+		if((SODS)&&(LOstate)&&(!SODSenable))
 		{
 			ABstate=1;
 			if((SODS)&&(LOstate)&&(!SODSenable)&&(ABflag)) 
@@ -105,12 +100,16 @@ void main(void)
 				SODSstate=1;
 				SODSenable=1;
 				SODS_LED=1;
-				ABflag=0;			
-				camera_order=START_ACQUISITION;
+				ABflag=0;				
 			}
 		}
+		if(SODSstate)
+		{
+			camera_order=START_ACQUISITION;
+		}
 		
-		if((SOE)&&(SODSstate)&&(LOstate)&&(!SOEenable)) //SOE Signal
+		/* SOE signal */
+		if((SOE)&&(SODSstate)&&(LOstate)&&(!SOEenable))
 		{
 			ABstate=1;
 			if((SOE)&&(SODSstate)&&(LOstate)&&(!SOEenable)&&(ABflag)) 
@@ -125,199 +124,10 @@ void main(void)
 		{
 			HEATER=255;
 		}
-		/*tr_heat++;
-		if((SOEstate)&&(tr_heat>=TR_HEATER))
-		{
-			if((avg_heat-avg_cell)>146)
-			{
-				HEATER=0;
-			}
-			else
-			{
-				if((avg_heat-avg_cell)>(146-(TLINEARE*15)))
-				{
-					HEATER=(avg_cell+146-avg_heat)*(255/(TLINEARE*15));
-				}
-				else
-				{
-					HEATER=255;
-				}
-			}
-			tr_heat=0;
-		}
-		*/
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-//	DelayMs(250);
-//	DelayMs(250);
-	/*
-	while(1)
-	{				
-		
-		if(conv)
-		{
-			conv=0;
-			//chconv=1; //provvisorio
-			switch (chconv)
-			{
-				case 0:
-				chconv=chconv^1;
-				ADCON0=SENSOR0;
-				//DelayUs(250);
-				GO=1;
-				while(GO)
-				//DelayUs(250);
-				t_cell=(ADRESH<<8)+ADRESL;
-				
-				if(n_avg_cell<DIMAVG)
-				{
-					sum_cell=+t_cell;
-					n_avg_cell++;
-				}
-				else
-				{
-					avg_cell=sum_cell/(n_avg_cell-1);
-					sum_cell=0;
-					n_avg_cell=0;
-					
-					sendtemp(avg_cell);
-				}
-				sendtemp(t_cell); //temporaneo test
-				break;
-				
-				case 1:
-				chconv=chconv^1;
-				ADCON0=SENSOR1;
-				DelayUs(250);
-				GO=1;
-				while(GO)
-				DelayUs(250);
-				t_heat=(ADRESH<<8)+ADRESL;
-				
-				if(n_avg_heat<DIMAVG)
-				{
-					sum_heat=+t_heat;
-					n_avg_heat++;
-				}
-				else
-				{
-					avg_heat=sum_heat/(n_avg_heat-1);
-					sum_heat=0;
-					n_avg_heat=0;
-					
-					sendtemp(avg_heat);
-				}	
-				sendtemp(t_heat);//temporaneo test
-				break;
-			}
-
-			
-		}
-
-		//temporaneo
-		avg_cell=t_cell;
-		avg_heat=t_heat;
-		
-		
-		if(avg_cell>avg_heat)
-		{
-			RC0=1;
-			RC1=0;
-		}
-		if(avg_heat>avg_cell)
-		{
-			RC0=0;
-			RC1=1;
-		}
-		if(avg_heat==avg_cell)
-		{
-			RC0=1;
-			RC1=1;
-		}
-		
-		if((LO)&&(!LOenable)) //LO Signal
-		{
-			ABstate=1;
-			if((LO)&&(!LOenable)&&(ABflag)) 
-			{
-				LOstate=1;
-				LOenable=1;
-				LO_LED=1;
-				ABflag=0;
-			}
-		}
-		
-		if((SODS)&&(LOstate)&&(!SODSenable)) //SODS Signal
-		{
-			ABstate=1;
-			if((SODS)&&(LOstate)&&(!SODSenable)&&(ABflag)) 
-			{
-				SODSstate=1;
-				SODSenable=1;
-				SODS_LED=1;
-				ABflag=0;
-				
-				RA4=1;
-			
-			
-			}
-		}
-		
-		if((SOE)&&(SODSstate)&&(LOstate)&&(!SOEenable)) //SOE Signal
-		{
-			ABstate=1;
-			if((SOE)&&(SODSstate)&&(LOstate)&&(!SOEenable)&&(ABflag)) 
-			{
-				SOEstate=1;
-				SOEenable=1;
-				SOE_LED=1;
-				ABflag=0;
-			}
-		}
-		tr_heat++;
-		if((SOEstate)&&(tr_heat>=TR_HEATER))
-		{
-			if((avg_heat-avg_cell)>146)
-			{
-				HEATER=0;
-			}
-			else
-			{
-				if((avg_heat-avg_cell)>(146-(TLINEARE*15)))
-				{
-					HEATER=(avg_cell+146-avg_heat)*(255/(TLINEARE*15));
-				}
-				else
-				{
-					HEATER=255;
-				}
-			}
-			tr_heat=0;
-		}
-	}*/
+	}	
 }
 
-unsigned int bin_dec(unsigned int bin)
-{
-	unsigned int dec=0;
-
-	for (int k=1;bin;k*=2,bin/=10)
-	{
-		dec+=(bin%10)*k;
-	}
-	return dec;
-}
-
-
+/* Send temp value through COM port */
 void sendtemp(int temp)
 {
 	unsigned char tempH, tempL;
@@ -333,15 +143,7 @@ void sendtemp(int temp)
 	TXREG=tempL;
 }
 
-	
-void DelayMillisec(int millisec)
-{
-	for(int i=0;i<millisec*4;i++)
-	{
-		DelayUs(250);
-	}
-}
-
+/* Put char on COM port */
 void putch(unsigned char byte) 
 {
 	/* output one byte */
@@ -350,6 +152,7 @@ void putch(unsigned char byte)
 	TXREG = byte;
 }
 
+/* Get char on COM port */
 unsigned char getch() 
 {
 	/* retrieve one byte */
@@ -358,6 +161,7 @@ unsigned char getch()
 	return RCREG;	
 }
 
+/* Echo char on COM port */
 unsigned char getche(void)
 {
 	unsigned char c;
@@ -365,16 +169,18 @@ unsigned char getche(void)
 	return c;
 }
 
+/* ISR */
 void interrupt isr(void)
 {
-	if (TMR0IF) //Interrupt da TMR0
+	if (TMR0IF) /* On overflow of TMR0 */
 	{
 		/* Reset TMR0 internal counter */
 		TMR0H = T0_RELOAD_HIGH;
         TMR0L = T0_RELOAD_LOW;
 		
-		acquisition_data.time++; //Global time
+		acquisition_data.time++; /* Global time */
 		
+		/* Timer for Laser Power On after LO */
 		if(LOstate)
 		{
 			TimerLaser++;
@@ -382,27 +188,31 @@ void interrupt isr(void)
 		
 		if (TimerLaser>=TEMPOLASER)
 		{
-			LASER=1; //Accendo il laser
+			LASER=1; /* Laser power on */
 		}
 		
+		/* Timer for Heater Power On after SOE */
 		if(SOEstate)
 		{
-			//TimerHeater++; //per prove off
+			//TimerHeater++; /* Off for tests */
 		}
 		
+		/* Timer for Heater Power Off after predefined time */
 		if (TimerHeater>=TEMPOHEATER)
 		{
-			HEATER=0; //Spegne heater
-			SOEstate=0; //Disabilita il segnale SOE
+			HEATER=0; /* Heater power off */
+			SOEstate=0;
 		}
 		
-		TimerConv++;
+		/* Timer for each conversion */
 		if (TimerConv>=TEMPOCONV)
 		{
-			conv=1; //Abilito conversione adc
+			conv=1; /* Starts adc conversion */
 			TimerConv=0;
 		}
+		TimerConv++;
 		
+		/* Timer for debounce system */
 		if(ABstate)
 		{
 			TimerAB++;
