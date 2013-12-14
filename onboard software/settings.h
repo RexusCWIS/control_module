@@ -27,6 +27,16 @@
 #define TLINEARE 2        //Temperatura entro la quale effettuare la regolazione lineare del PWM (1°grado) 
 #define DIMAVG 1          //Conversion average values
 #define TR_HEATER 10      //Tempo refresh duty cycle heater
+
+// I2C macros //
+
+#define T0_RELOAD_HIGH  0xE1u
+#define T0_RELOAD_LOW   0x7Bu
+
+#define I2C_RX_FRAME_SIZE   32u
+#define I2C_TX_FRAME_SIZE   32u
+
+#define I2C_ADDRESS 0x22u
   
 
 
@@ -54,18 +64,18 @@ unsigned int bin_dec(unsigned int bin);
 03 - AN1  * A/D 2 HEATER TEMP SENSOR
 04 - AN2  * A/D 3 OTHER TEMP SENSOR
 05 - AN3  * VREF+ A/D
-06 - RA4  ### led sods
+06 - RA4  
 07 - AN4  * A/D 4 PRESSURE SENSOR
 08 - VSS  * GND
 09 - OSC1 * XTAL
 10 - OSC2 * XTAL
 
-11 - RC0  ### temp0
-12 - RC1  ### temp1
+11 - RC0  * LO LED // ### temp0
+12 - RC1  * SODS LED // ### temp1
 13 - CCP1 * HEATER DRIVER
 14 - RC3  * I2C SCL
 15 - RC4  * I2C SDA
-16 - RC5
+16 - RC5  * SOE LED
 17 - TX   * RS-488
 18 - RX   * RS-488
 
@@ -76,9 +86,9 @@ unsigned int bin_dec(unsigned int bin);
 23 - RB2  * SOE
 24 - RB3  * LO
 25 - RB4  * LASER DRIVER
-26 - RB5  * LO LED
-27 - RB6  * SODS LED
-28 - RB7  * SOE LED
+26 - RB5
+27 - RB6  * PGC
+28 - RB7  * PGD
 */
 
 
@@ -91,7 +101,7 @@ void settings(void)
 	PORTB=0;
 	TRISB=0b00001111;
 	PORTC=0;
-	TRISC=0b11000000; //Imposto RC1 e RC2 come uscite (moduli PWM), RC6 e RC7 come ricetrasmissione seriale
+	TRISC=0b11011000; //Imposto RC1 e RC2 come uscite (moduli PWM), RC3 e RC4 come ricetrasmissione I2C, RC6 e RC7 come ricetrasmissione seriale
 	
 	//SETUP modulo Interrupt//
 	IPEN=0; //Disabilito la distinzione di priorità degli interrupts
@@ -114,7 +124,7 @@ void settings(void)
 	
 	
 	//SETUP modulo A/D//	
-	ADCON1=0b00011100;  //Imposto la porta RA3 come VREF+ (1V), Imposto le porte RA0, RA1 e RA2 come ingressi analogici AN0, AN1 e AN2
+	ADCON1=0b00011010;  //Imposto la porta RA3 come VREF+ (1V), Imposto le porte RA0, RA1 e RA2 come ingressi analogici AN0, AN1 e AN2 ( era 0b00011100)
 	ADCON2=0b10110101; //Imposto 'giustifica a destra dei Bits, Tempo di acquisizione 16 Tad = 64us (prima 4Tad), Clock di conversione Fosc/16 = 4us (prima 100 Fosc/4)
 		
 	//SETUP moduli PWM1 e PWM2//
