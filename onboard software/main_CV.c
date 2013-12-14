@@ -17,7 +17,6 @@
 
 
 
-static unsigned int time   = 0;
 static unsigned char dummy = 0;
 static unsigned int i2c_index  = 0;
 static unsigned char i2c_dev_reg = 0;
@@ -35,7 +34,11 @@ static unsigned char i2c_tx_reg_sizes[2]  = {sizeof(i2c_order_e), sizeof(i2c_fra
 
 static i2c_state_machine_e i2c_state;
 
-
+/**
+ * @brief Initializes timer parameters.
+ * @details Initializes the TMR0 module to get a 1 millisecond tick. 
+ */
+static void timer_init(void);
 
 int LOstate=0, SODSstate=0, SOEstate=0, ABstate=0, ABflag=0, conv=0;
 int TimerLaser=0, TimerHeater=0, TimerConv=0, TimerAB=0;
@@ -55,47 +58,25 @@ void main(void)
 	
 	while(1)
 	{
+        /* Sensor data acquisition loop */
 		if (conv)
 		{
-			ADCON0=SENSOR0;
-			GO=1;
-			while(GO)
-			t_cell=(ADRESH<<8)+ADRESL;
-			
-			t_cell=bin_dec(t_cell); //*0.8 
-			
-			t_cell=25;
-			
-			while(!TXIF)
-			continue;
-			TXREG=t_cell;
-			
-			acquisition_data.temperatures[0].data=t_cell; //Loading t_cell to I2C structure
-			
-			//sendtemp(t_cell);
-			
-			
+            /* Measure cell temperature */
+			ADCON0 = SENSOR0;
+            GO = 1; 
+			while(GO) {
+			    acquisition_data.temperatures[0] = (ADRESH << 8) + ADRESL;
+			}
+		
+            /* Measure heater temperature */
 			ADCON0=SENSOR1;
-			GO=1;
-			while(GO)
-			t_heat=(ADRESH<<8)+ADRESL;
+			GO = 1;
+			while(GO) {
+			    acquisition_data.temperatures[1] = (ADRESH << 8) + ADRESL;
+			}
 			
-			t_heat=bin_dec(t_heat);
-			
-			t_cell=207;
-			
-			while(!TXIF)
-			continue;
-			TXREG=t_heat;
-			
-			acquisition_data.temperatures[1].data=t_heat; //Loading t_cell to I2C structure
-			
-			//sendtemp(t_heat);
-			
-			
-			
-			avg_cell=t_cell;
-			avg_heat=t_heat;
+			/* avg_cell=t_cell;
+			   avg_heat=t_heat; */
 			
 			//SOE_LED=SOE_LED^1;
 			//SODS_LED=SODS_LED^1;
@@ -388,12 +369,11 @@ void interrupt isr(void)
 {
 	if (TMR0IF) //Interrupt da TMR0
 	{
-		//Reset TMR0
+		/* Reset TMR0 internal counter */
 		TMR0H = T0_RELOAD_HIGH;
         TMR0L = T0_RELOAD_LOW;
-        TMR0IF = 0;
 		
-		time++; //Global time
+		acquisition_data.time++; //Global time
 		
 		if(LOstate)
 		{
@@ -439,7 +419,8 @@ void interrupt isr(void)
 			TimerAB=0;
 		}
 		
-		TMR0IF=0; //Resetto il flag interrupt TMR0
+		/* Timer interrupt flag reset */
+        TMR0IF = 0;
 	}
 	
 	/* I2C interrupt */
