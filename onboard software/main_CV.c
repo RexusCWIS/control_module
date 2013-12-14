@@ -65,14 +65,14 @@ void main(void)
 			ADCON0 = SENSOR0;
             GO = 1; 
 			while(GO) {
-			    acquisition_data.temperatures[0] = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
+			    acquisition_data.temperatures[0].data = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
 			}
 		
             /* Measure heater temperature */
 			ADCON0=SENSOR1;
 			GO = 1;
 			while(GO) {
-			    acquisition_data.temperatures[1] = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
+			    acquisition_data.temperatures[1].data = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
 			}
 			
 			/* avg_cell=t_cell;
