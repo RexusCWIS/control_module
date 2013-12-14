@@ -1,17 +1,15 @@
 /*-------- REXUS Project -------*\
 |*-----CWIS Microcontroller-----*|
-|*------------main.c------------*|
 |*----------PIC18F2520----------*|
-\*--Versione 1.0.0 - Gen. 2013--*/ //508 25,56 666 36,62
+\*-Fabrizio Mancino - Gen. 2013-*/
 
-#include "pic18f2520 configbits.h"
+
 #include<htc.h>
 #define _LEGACY_HEADERS 
 #define XTAL_FREQ 20MHZ
 
-
+#include "pic18f2520 configbits.h"
 #include "settings.h"
-#include "delay.h"
 #include "i2c_slave.h"
 #include "i2c_frames.h"
 

@@ -1,3 +1,8 @@
+/*-------- REXUS Project -------*\
+|*-----CWIS Microcontroller-----*|
+|*----------PIC18F2520----------*|
+\*-Fabrizio Mancino - Gen. 2013-*/
+
 #pragma config OSC = HS// Oscillator Selection
 #pragma config FCMEN = OFF // Fail-Safe Clock Monitor
 #pragma config IESO = OFF // Internal/External Oscillator Switchover
