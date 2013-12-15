@@ -25,8 +25,8 @@
 #define TEMPERATURE_CONTROL_PGAIN    10u
 
 /* TMR0 (1ms tick) reload values */
-#define T0_RELOAD_HIGH  0xFDu
-#define T0_RELOAD_LOW   0x8Eu
+#define T0_RELOAD_HIGH 0xEC //( last 0xFDu)
+#define T0_RELOAD_LOW  0x77 // (last 0x8Eu)
 
 /* I2C macros */
 #define I2C_RX_FRAME_SIZE   32u
@@ -36,8 +36,8 @@
 // 1 unit = 1ms //
 #define TEMPOLASER 5      // Timer for Laser Power On after LO (default 5000)
 #define TEMPOHEATER 15000 //Timer for Heater Power Off after predefined time (default 15000)
-#define TEMPOCONV 10      //Timer between ADC conversion (default 100)
-#define TEMPOAB 10        //Timer for debounce system (default 50)
+#define TEMPOCONV 250      //Timer between ADC conversion (default 100)
+#define TEMPOAB 50        //Timer for debounce system (default 50)
 
 //FUNCTION PROTOTYPES//
 void settings(void);
@@ -103,9 +103,12 @@ void settings(void) {
 	// TXIE=1; //COM transmitting interrupt (Not more used)
 	
 	
-	// Setup TMR0 // Setted in code
-	//T0CON=0b11000100; //Set TMR0 at 8bit, internal clock tick on rising edge, prescaler at 1:32
-	//TMR0=100; //Set TMR0 to overflow at 998,4Us
+	// Setup TMR0 //
+	T0CON=0b10001100; //Set TMR0 at 16bit, internal clock tick on rising edge, prescaler at 1:1
+	//Init TMR0H and TMR0L to have an interrupt each 1ms
+	TMR0H=T0_RELOAD_HIGH;
+	TMR0L=T0_RELOAD_LOW;
+	
 	
 	// Setup USART module //
 	TXSTA=0b00100110; // Set 8 bit transmission, not sync mode, sync break at ended transmission, high speed

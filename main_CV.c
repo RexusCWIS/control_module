@@ -42,27 +42,31 @@ static i2c_state_machine_e i2c_state;
  */
 static void timer_init(void);
 
-int LOstate=0, SODSstate=0, SOEstate=0, ABstate=0, ABflag=0, conv=0;
-int TimerLaser=0, TimerHeater=0, TimerConv=0, TimerAB=0;
+unsigned int LOstate=0, SODSstate=0, SOEstate=0, ABstate=0, ABflag=0, conv=0;
+unsigned int TimerLaser=0, TimerHeater=0, TimerConv=0, TimerAB=0;
 
 void main(void)
 {
 	
 
-	int LOenable=0, SODSenable=0, SOEenable=0;
+	unsigned int LOenable=0, SODSenable=0, SOEenable=0;
 	unsigned int t_cell=0, t_heat=0;
 	unsigned long time=0;
 	
 	settings();	/* Register Init */
 	i2c_slave_init(I2C_ADDRESS); /* I2C Init */
-	timer_init(); /* TMR0 Init */
+	
+	/** Check in settings.h , already implemented */
+	//timer_init(); /* TMR0 Init */
 
 	while(1)
 	{
         /* Sensor data acquisition loop */
 		if (conv)
 		{
-            /* Measure cell temperature */
+            conv=0; /* reset conversion flag */
+			
+			/* Measure cell temperature */
 			ADCON0 = SENSOR0;
             GO = 1; 
 			while(GO) {
@@ -176,6 +180,8 @@ void interrupt isr(void)
 {
 	if (TMR0IF) /* TMR0 overflow interrupt */
 	{
+		TMR0IF = 0; /* Timer interrupt flag reset */
+		
 		/* Reset TMR0 internal counter */
 		TMR0H = T0_RELOAD_HIGH;
         TMR0L = T0_RELOAD_LOW;
@@ -242,9 +248,6 @@ void interrupt isr(void)
 			ABflag=1;
 			TimerAB=0;
 		}
-		
-		/* Timer interrupt flag reset */
-        TMR0IF = 0;
 	}
 	
 	/* I2C interrupt */
@@ -331,7 +334,7 @@ void interrupt isr(void)
 static void timer_init(void) {
 
     /* Set the internal oscillator to 8MHz */
-    OSCCON |= 0x70; 
+    OSCCON |= 0x70;  
 
     /* Use timer 0 to generate an interrupt each second */
     T0CONbits.TMR0ON = 0;   /* Disable timer */
