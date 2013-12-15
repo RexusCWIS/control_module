@@ -21,11 +21,15 @@ static unsigned char i2c_dev_reg = 0;
 
 static unsigned char i2c_rx_frame[I2C_RX_FRAME_SIZE];
 
+/* Control loop variables */
+int heater_power = 0; 
+
+/* I2C variables */
+
 /** @brief Order sent to the camera module.  */
 static i2c_order_e camera_order = STOP_ACQUISITION;
 /** @brief I2C frame, holding the data acquired by sensors. */
 static i2c_frame_s acquisition_data;
-
 static unsigned char* i2c_rx_registers[1] = {i2c_rx_frame};
 static unsigned char* i2c_tx_registers[2] = {(unsigned char *) &camera_order, (unsigned char *) &acquisition_data};
 static unsigned char i2c_tx_reg_sizes[2]  = {sizeof(i2c_order_e), sizeof(i2c_frame_s)};
@@ -170,7 +174,7 @@ unsigned char getche(void)
 /* ISR */
 void interrupt isr(void)
 {
-	if (TMR0IF) /* On overflow of TMR0 */
+	if (TMR0IF) /* TMR0 overflow interrupt */
 	{
 		/* Reset TMR0 internal counter */
 		TMR0H = T0_RELOAD_HIGH;
@@ -194,13 +198,25 @@ void interrupt isr(void)
 		{
 			//TimerHeater++; /* Off for tests */
 		}
-		
-		/* Timer for Heater Power Off after predefined time */
-		if (TimerHeater>=TEMPOHEATER)
-		{
-			HEATER=0; /* Heater power off */
-			SOEstate=0;
+	
+        /* Heater control loop */
+        /** @todo No need to keep the TimerHeater variable, directly use the system time variable */
+		if (TimerHeater <= TEMPOHEATER) {
+            /* Compute the error between the setpoint and the actual temperature */
+            heater_power = (int) acquisition_data.temperatures[0].data - TEMPERATURE_CONTROL_SETPOINT;
+            /* Multiply it by the proportional gain */
+            heater_power *= TEMPERATURE_CONTROL_PGAIN;
+
+            /* Apply system limits (no cooling, 8-bit duty cycle) */
+            heater_power = (heater_power < 0) ? 0 : heater_power;
+            HEATER = (unsigned char) (heater_power && 0xFFu); 
 		}
+
+		/* Timer for Heater Power Off after predefined time */
+        else {
+            HEATER = 0;     /* Power-off heater */ 
+            SOEstate = 0; 
+        }
 		
 		/* Timer for each conversion */
 		if (TimerConv>=TEMPOCONV)

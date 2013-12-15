@@ -19,13 +19,18 @@
 #define LASER RB4     // Laser command output
 #define HEATER CCPR1L // Heater command output (PWM)
 
-// I2C macros //
+/** @brief Temperature control setpoint. */
+#define TEMPERATURE_CONTROL_SETPOINT    0x100u
+/** @brief Temperature control proportional gain. */
+#define TEMPERATURE_CONTROL_PGAIN    10u
+
+/* TMR0 (1ms tick) reload values */
 #define T0_RELOAD_HIGH  0xFDu
 #define T0_RELOAD_LOW   0x8Eu
 
+/* I2C macros */
 #define I2C_RX_FRAME_SIZE   32u
 #define I2C_TX_FRAME_SIZE   32u
-
 #define I2C_ADDRESS 0x22u
 
 // 1 unit = 1ms //
@@ -80,15 +85,14 @@ unsigned int bin_dec(unsigned int bin);
 
 
 
-void settings(void)
-	{
+void settings(void) {
 	
 	PORTA=0;
 	TRISA=0b00000111; // Set RA0, RA1 and RA2 as input (A/D)
 	PORTB=0;
 	TRISB=0b00001110; // Set RB1, RB2 and RB3 as input (RXSM signals)
 	PORTC=0;
-	TRISC=0b11011000; // Set RC1 and RC2 as output (PWM module), RC3 e RC4 as transceiver I2C, RC6 e RC7 as transceiver COM port
+	TRISC=0b11011000; // Set RC1 and RC2 as output (PWM module), RC3 and RC4 as transceiver I2C, RC6 and RC7 as transceiver COM port
 	
 	// Interrupt setup //
 	IPEN=0; // Interrupt no properties
@@ -113,10 +117,10 @@ void settings(void)
 	// Setup A/D module //	
 	ADCON1=0b00011010;  // Set V3 as +REF (1V), set analog input channels ( last 0b00011100)
 	ADCON2=0b10110101; // Set bits right shifted, acquisition time 16 Tad = 64us, conversion clock Fosc/16 = 4us (default 100 Fosc/4)
-		
+	
 	//Setup PWM1 e PWM2 modules  //
 	CCP1CON=0b00001100; //Set CCP1 as PWM module
 	PR2=0b11111111; //Set PWM oscillator frequency at 39,06kHz
 	CCPR1L=0; //Set dutycicle to 0%
 	T2CON=0b100; //Set TMR2 prescaler to 1
-	}
+}
