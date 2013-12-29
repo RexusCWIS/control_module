@@ -30,6 +30,7 @@ int heater_power = 0;
 static i2c_order_e camera_order = STOP_ACQUISITION;
 /** @brief I2C frame, holding the data acquired by sensors. */
 static i2c_frame_s acquisition_data;
+
 static unsigned char* i2c_rx_registers[1] = {i2c_rx_frame};
 static unsigned char* i2c_tx_registers[2] = {(unsigned char *) &camera_order, (unsigned char *) &acquisition_data};
 static unsigned char i2c_tx_reg_sizes[2]  = {sizeof(i2c_order_e), sizeof(i2c_frame_s)};
@@ -43,7 +44,7 @@ static i2c_state_machine_e i2c_state;
 static void timer_init(void);
 
 unsigned int LOstate=0, SODSstate=0, SOEstate=0, ABstate=0, ABflag=0, conv=0;
-unsigned int TimerLaser=0, TimerHeater=0, TimerConv=0, TimerAB=0;
+unsigned int TimerLaser=0, TimerHeater=0, TimerConv=0, TimerAB=0, TimerAcquisition=0;
 
 void main(void)
 {
@@ -72,6 +73,9 @@ void main(void)
 			while(GO) {
 			    acquisition_data.temperatures[0].data = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
 			}
+			
+			/* ONLY FOR TESTS - Send cell temperature through COM port */
+				sendtemp(acquisition_data.temperatures[0].data);
 		
             /* Measure heater temperature */
 			ADCON0=SENSOR1;
@@ -79,6 +83,9 @@ void main(void)
 			while(GO) {
 			    acquisition_data.temperatures[1].data = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
 			}
+			
+			/* ONLY FOR TESTS - Send cell temperature through COM port */
+				sendtemp(acquisition_data.temperatures[1].data);
 		}
 	
 		/* LO signal */
@@ -197,6 +204,17 @@ void interrupt isr(void)
 		if (TimerLaser>=TEMPOLASER)
 		{
 			LASER=1; /* Laser power on */
+		}
+		
+		/* Timer for stop the camera acquisition */
+		if(SODSstate)
+		{
+			TimerAcquisition++;
+		}
+		if(TimerAcquisition>=TEMPOACQUISITION)
+		{
+			camera_order = STOP_ACQUISITION;
+			TimerAcquisition=0;
 		}
 		
 		/* Timer for Heater Power On after SOE */

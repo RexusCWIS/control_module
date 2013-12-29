@@ -34,10 +34,11 @@
 #define I2C_ADDRESS 0x22u
 
 // 1 unit = 1ms //
-#define TEMPOLASER 5      // Timer for Laser Power On after LO (default 5000)
+#define TEMPOLASER 5000     // Timer for Laser Power On after LO (default 5000)
 #define TEMPOHEATER 15000 //Timer for Heater Power Off after predefined time (default 15000)
 #define TEMPOCONV 250      //Timer between ADC conversion (default 100)
 #define TEMPOAB 50        //Timer for debounce system (default 50)
+#define TEMPOACQUISITION 140000 //Timer for stop the camera acquisition (default 140000)
 
 //FUNCTION PROTOTYPES//
 void settings(void);
