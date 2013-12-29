@@ -38,7 +38,7 @@
 #define TEMPOHEATER 15000 //Timer for Heater Power Off after predefined time (default 15000)
 #define TEMPOCONV 250      //Timer between ADC conversion (default 100)
 #define TEMPOAB 50        //Timer for debounce system (default 50)
-#define TEMPOACQUISITION 140000 //Timer for stop the camera acquisition (default 140000)
+#define TEMPOACQUISITION 10000 //Timer for stop the camera acquisition (default 140000)
 
 //FUNCTION PROTOTYPES//
 void settings(void);

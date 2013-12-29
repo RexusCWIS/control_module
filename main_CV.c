@@ -52,7 +52,6 @@ void main(void)
 
 	unsigned int LOenable=0, SODSenable=0, SOEenable=0;
 	unsigned int t_cell=0, t_heat=0;
-	unsigned long time=0;
 	
 	settings();	/* Register Init */
 	i2c_slave_init(I2C_ADDRESS); /* I2C Init */
@@ -98,10 +97,9 @@ void main(void)
 				LOenable=1;
 				LO_LED=1;
 				ABflag=0;
+				
+				/* LO commands */
 			}
-		}
-		if(LOstate)
-		{
 		}
 		
 		/* SODS signal */
@@ -113,12 +111,12 @@ void main(void)
 				SODSstate=1;
 				SODSenable=1;
 				SODS_LED=1;
-				ABflag=0;				
+				ABflag=0;	
+				
+				
+				/* SODS commands */
+				camera_order=START_ACQUISITION;
 			}
-		}
-		if(SODSstate)
-		{
-			camera_order=START_ACQUISITION;
 		}
 		
 		/* SOE signal */
@@ -131,11 +129,11 @@ void main(void)
 				SOEenable=1;
 				SOE_LED=1;
 				ABflag=0;
+				
+				
+				/* SOE commands */
+				HEATER=255;
 			}
-		}
-		if(SOEstate)
-		{
-			HEATER=255;
 		}
 	}	
 }
