@@ -16,25 +16,32 @@
 
 
 static unsigned char dummy = 0;
-static unsigned int i2c_index  = 0;
-static unsigned char i2c_dev_reg = 0;
-
-static unsigned char i2c_rx_frame[I2C_RX_FRAME_SIZE];
 
 /* Control loop variables */
 int heater_power = 0; 
 
 /* I2C variables */
 
+/** @brief I2C ISR index increment variable. */
+static unsigned int i2c_index  = 0;
+/** @brief Holds the current device register accessed by the I2C bus master. */
+static unsigned char i2c_dev_reg = 0;
+/** @brief Array holding the data received on the I2C bus. */
+static unsigned char i2c_rx_frame[I2C_RX_FRAME_SIZE];
+
 /** @brief Order sent to the camera module.  */
 static i2c_order_e camera_order = STOP_ACQUISITION;
 /** @brief I2C frame, holding the data acquired by sensors. */
 static i2c_frame_s acquisition_data;
 
+/** @brief Array of I2C device registers writeable by the I2C bus master. */
 static unsigned char* i2c_rx_registers[1] = {i2c_rx_frame};
+/** @brief Array of I2C device registers readable by the I2C bus master. */
 static unsigned char* i2c_tx_registers[2] = {(unsigned char *) &camera_order, (unsigned char *) &acquisition_data};
+/** @brief Size of the readable device registers arrays. */
 static unsigned char i2c_tx_reg_sizes[2]  = {sizeof(i2c_order_e), sizeof(i2c_frame_s)};
 
+/** @brief I2C ISR state machine. */
 static i2c_state_machine_e i2c_state;
 
 /**
