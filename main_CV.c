@@ -50,20 +50,18 @@ static i2c_state_machine_e i2c_state;
  */
 static void timer_init(void);
 
-unsigned int LOstate=0, SODSstate=0, SOEstate=0, ABstate=0, ABflag=0, conv=0;
-unsigned int TimerLaser=0, TimerHeater=0, TimerConv=0, TimerAB=0, TimerAcquisition=0;
+unsigned int LOstate = 0, SODSstate = 0, SOEstate = 0, ABstate = 0, ABflag = 0, conv = 0;
+unsigned int TimerLaser = 0, TimerHeater = 0, TimerConv = 0, TimerAB = 0, TimerAcquisition = 0;
 
 void main(void)
 {
-	
-
-	unsigned int LOenable=0, SODSenable=0, SOEenable=0;
-	unsigned int t_cell=0, t_heat=0;
+	unsigned int LOenable = 0, SODSenable = 0, SOEenable = 0;
+	unsigned int t_cell = 0, t_heat = 0;
 	
 	settings();	/* Register Init */
 	i2c_slave_init(I2C_ADDRESS); /* I2C Init */
 	
-	/** Check in settings.h , already implemented */
+	/* Check in settings.h , already implemented */
 	//timer_init(); /* TMR0 Init */
 
 	while(1)
@@ -71,7 +69,7 @@ void main(void)
         /* Sensor data acquisition loop */
 		if (conv)
 		{
-            conv=0; /* reset conversion flag */
+            conv = 0;   /* reset conversion flag */
 			
 			/* Measure cell temperature */
 			ADCON0 = SENSOR0;
@@ -81,89 +79,83 @@ void main(void)
 			}
 			
 			/* ONLY FOR TESTS - Send cell temperature through COM port */
-				sendtemp(acquisition_data.temperatures[0].data);
+			sendtemp(acquisition_data.temperatures[0].data);
 		
             /* Measure heater temperature */
-			ADCON0=SENSOR1;
+			ADCON0 = SENSOR1;
 			GO = 1;
 			while(GO) {
 			    acquisition_data.temperatures[1].data = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
 			}
 			
 			/* ONLY FOR TESTS - Send cell temperature through COM port */
-				sendtemp(acquisition_data.temperatures[1].data);
+			sendtemp(acquisition_data.temperatures[1].data);
 		}
 	
 		/* LO signal */
-		if((LO)&&(!LOenable))
+		if((LO) && (!LOenable))
 		{
-			ABstate=1;
-			if((LO)&&(!LOenable)&&(ABflag)) 
-			{
-				LOstate=1;
-				LOenable=1;
-				LO_LED=1;
-				ABflag=0;
+			ABstate = 1;
+			if((LO) && (!LOenable) && (ABflag)) {
+				LOstate = 1;
+				LOenable = 1;
+				LO_LED = 1;
+				ABflag = 0;
 				
 				/* LO commands */
 			}
 		}
 		
 		/* SODS signal */
-		if((SODS)&&(LOstate)&&(!SODSenable))
-		{
-			ABstate=1;
-			if((SODS)&&(LOstate)&&(!SODSenable)&&(ABflag)) 
-			{
-				SODSstate=1;
-				SODSenable=1;
-				SODS_LED=1;
-				ABflag=0;	
-				
+		if((SODS) && (LOstate) && (!SODSenable)) {
+			ABstate = 1;
+			if((SODS) && (LOstate) && (!SODSenable) && (ABflag)) {
+				SODSstate = 1;
+				SODSenable = 1;
+				SODS_LED = 1;
+				ABflag = 0;	
 				
 				/* SODS commands */
-				camera_order=START_ACQUISITION;
+				camera_order = START_ACQUISITION;
 			}
 		}
 		
 		/* SOE signal */
-		if((SOE)&&(SODSstate)&&(LOstate)&&(!SOEenable))
-		{
-			ABstate=1;
-			if((SOE)&&(SODSstate)&&(LOstate)&&(!SOEenable)&&(ABflag)) 
-			{
-				SOEstate=1;
-				SOEenable=1;
-				SOE_LED=1;
-				ABflag=0;
-				
+		if((SOE) && (SODSstate) && (LOstate) && (!SOEenable)) {
+			ABstate = 1;
+			
+            if((SOE) && (SODSstate) && (LOstate) && (!SOEenable) && (ABflag)) {
+				SOEstate = 1;
+				SOEenable = 1;
+				SOE_LED = 1;
+				ABflag = 0;
 				
 				/* SOE commands */
-				HEATER=255;
+				HEATER = 255;
 			}
 		}
 	}	
 }
 
 /* Send temp value through COM port */
-void sendtemp(int temp)
-{
-	unsigned char tempH, tempL;
-	
-	tempH=(temp>>8);
+void sendtemp(int temp) {
+
+	unsigned char tempH, tempL;	
+
+    tempH = (temp >> 8);
 	while(!TXIF)
 	continue;
-	TXREG=tempH;
+	TXREG = tempH;
 	
-	tempL=temp;
+	tempL = temp;
 	while(!TXIF)
 	continue;
-	TXREG=tempL;
+	TXREG = tempL;
 }
 
 /* Put char on COM port */
-void putch(unsigned char byte) 
-{
+void putch(unsigned char byte) {
+
 	/* output one byte */
 	while(!TXIF)	/* set when register is empty */
 		continue;
@@ -180,19 +172,17 @@ unsigned char getch()
 }
 
 /* Echo char on COM port */
-unsigned char getche(void)
-{
+unsigned char getche(void) {
 	unsigned char c;
 	putch(c = getch());
 	return c;
 }
 
 /* ISR */
-void interrupt isr(void)
-{
-	if (TMR0IF) /* TMR0 overflow interrupt */
-	{
-		TMR0IF = 0; /* Timer interrupt flag reset */
+void interrupt isr(void) {
+	if (TMR0IF) { /* TMR0 overflow interrupt */
+		
+        TMR0IF = 0; /* Timer interrupt flag reset */
 		
 		/* Reset TMR0 internal counter */
 		TMR0H = T0_RELOAD_HIGH;
@@ -201,30 +191,26 @@ void interrupt isr(void)
 		acquisition_data.time++; /* Global time */
 		
 		/* Timer for Laser Power On after LO */
-		if(LOstate)
-		{
+		if(LOstate) {
 			TimerLaser++;
 		}
 		
-		if (TimerLaser>=TEMPOLASER)
-		{
+		if (TimerLaser >= TEMPOLASER) {
 			LASER=1; /* Laser power on */
 		}
 		
 		/* Timer for stop the camera acquisition */
-		if(SODSstate)
-		{
+		if(SODSstate) {
 			TimerAcquisition++;
 		}
-		if(TimerAcquisition>=TEMPOACQUISITION)
-		{
+
+		if(TimerAcquisition >= TEMPOACQUISITION) {
 			camera_order = STOP_ACQUISITION;
-			TimerAcquisition=0;
+			TimerAcquisition = 0;
 		}
 		
 		/* Timer for Heater Power On after SOE */
-		if(SOEstate)
-		{
+		if(SOEstate) {
 			//TimerHeater++; /* Off for tests */
 		}
 	
@@ -248,28 +234,25 @@ void interrupt isr(void)
         }
 		
 		/* Timer for each conversion */
-		if (TimerConv>=TEMPOCONV)
-		{
-			conv=1; /* Starts adc conversion */
-			TimerConv=0;
+		if (TimerConv >= TEMPOCONV) {
+			conv = 1; /* Starts adc conversion */
+			TimerConv = 0;
 		}
 		TimerConv++;
 		
 		/* Timer for debounce system */
-		if(ABstate)
-		{
+		if(ABstate) {
 			TimerAB++;
-			ABstate=0;
+			ABstate = 0;
 		}
-		else
-		{
-			TimerAB=0;
+		else {
+			TimerAB = 0;
 		}
 		
-		if(TimerAB>=TEMPOAB)
+		if(TimerAB >= TEMPOAB)
 		{
-			ABflag=1;
-			TimerAB=0;
+			ABflag = 1;
+			TimerAB = 0;
 		}
 	}
 	
