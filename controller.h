@@ -20,12 +20,18 @@
 #define ANTI_INTEGRATOR_WINDUP
 #endif  /* SATURATION */
 
+/** @brief Integer type redefinition, for portability. */
+typedef int INT; 
+
+/*
+ * FUNCTIONS
+ */
 
 /**  
  * @brief Represents a proportional (P) controller. 
  */
 typedef struct {
-    unsigned int p;     /**< Proportional gain value. */ 
+    unsigned INT p;     /**< Proportional gain value. */ 
 }p_controller_s; 
 
 /** 
@@ -33,21 +39,21 @@ typedef struct {
  */
 typedef struct {
     /* Public parameters */
-    unsigned int p;     /**< Proportional gain value. */ 
-    unsigned int i;     /**< Integral gain value. */
-    unsigned int dt;    /**< Time elapsed between two iterations of the control loop. */
+    unsigned INT p;     /**< Proportional gain value. */ 
+    unsigned INT i;     /**< Integral gain value. */
+    unsigned INT dt;    /**< Time elapsed between two iterations of the control loop. */
     
     #ifdef SATURATION
-    int sat_min;        /**< Lower saturation bound (minimum setpoint value). */ 
-    int sat_max;        /**< Upper saturation bound (maximum setpoint value). */
+    INT sat_min;        /**< Lower saturation bound (minimum setpoint value). */ 
+    INT sat_max;        /**< Upper saturation bound (maximum setpoint value). */
     #endif  /* SATURATION */
 
     /* Private parameters */
-    int _integral;      /**< Integrated error. */
-    unsigned int _dti;  /**< Integral gain multiplied by the time step value. */
+    INT _integral;      /**< Integrated error. */
+    unsigned INT _dti;  /**< Integral gain multiplied by the time step value. */
 
     #ifdef ANTI_INTEGRATOR_WINDUP
-    int _is_saturated;  /**< Status of the integrator (-1 or 1 means saturation) */ 
+    INT _is_saturated;  /**< Status of the integrator (-1 or 1 means saturation) */ 
     #endif  /* ANTI_INTEGRATOR_WINDUP */
 }pi_controller; 
 
@@ -59,7 +65,7 @@ typedef struct {
  * @param[in]   min     Lower admissible bound for the given @p value. 
  * @param[in]   max     Upper admissible bound for the given @p value. 
  */
-static inline int _saturation(int value, int lower_bound, int upper_bound); 
+static inline INT _saturation(INT value, INT lower_bound, INT upper_bound); 
 
 #ifdef ANTI_INTEGRATOR_WINDUP
 
@@ -76,7 +82,7 @@ static inline int _saturation(int value, int lower_bound, int upper_bound);
  *          to 1 if @p value was greater than @p max or -1 if it was lower than @p min. 
  *          It is set to 0 if the integrator is not saturating. 
  */
-static inline int _integrator_saturation(int value, int min, int max, int *is_saturated); 
+static inline INT _integrator_saturation(INT value, INT min, INT max, INT *is_saturated); 
 
 #endif  /* ANTI_INTEGRATOR_WINDUP */
 
@@ -86,10 +92,10 @@ static inline int _integrator_saturation(int value, int min, int max, int *is_sa
  * @brief Represents a proportional-integral-derivative (PID) controller.
  */
 typedef struct {
-    unsigned int p;     /**< Proportional gain value. */
-    unsigned int i;     /**< Integral gain value. */
-    unsigned int d;     /**< Derivative gain value. */
-    unsigned int dt;    /**< Time elapsed between two iterations of the control loop. */ 
+    unsigned INT p;     /**< Proportional gain value. */
+    unsigned INT i;     /**< Integral gain value. */
+    unsigned INT d;     /**< Derivative gain value. */
+    unsigned INT dt;    /**< Time elapsed between two iterations of the control loop. */ 
 }pid_controller; 
 
 /**
@@ -104,11 +110,11 @@ typedef struct {
  *       the @ref SATURATION configuration macro is not defined. 
  */
 static inline void init_pi_controller(pi_controller *c,
-                                      unsigned int kp, 
-                                      unsigned int ki,
-                                      unsigned int dt, 
-                                      int sat_min, 
-                                      int sat_max);
+                                      unsigned INT kp, 
+                                      unsigned INT ki,
+                                      unsigned INT dt, 
+                                      INT sat_min, 
+                                      INT sat_max);
 
 /**
  * @brief Control loop for P controllers.
@@ -118,7 +124,7 @@ static inline void init_pi_controller(pi_controller *c,
  * @param[in]   error   Difference between the last setpoint and the measured data.
  * @returns New setpoint value. 
  */
-static inline unsigned int p_control_loop(const p_controller_s *c, int error);
+static inline unsigned INT p_control_loop(const p_controller_s *c, INT error);
 /**
  * @brief Control loop for PI controllers.
  * @details This function updates the setpoint of the controlled variable using 
@@ -127,7 +133,7 @@ static inline unsigned int p_control_loop(const p_controller_s *c, int error);
  * @param[in]   error   Difference between the last setpoint and the measured data.
  * @returns New setpoint value. 
  */
-static inline int pi_control_loop(const pi_controller_s *c, int error);
+static inline INT pi_control_loop(const pi_controller_s *c, INT error);
 
 /**
  * @brief Control loop for P controllers.
@@ -139,35 +145,42 @@ static inline int pi_control_loop(const pi_controller_s *c, int error);
  * @note As the computation performs a division by the time step of the controller, beware
  *       of imprecisions regarding the derivative term for large time step values. 
  */
-static inline int pid_control_loop(const pid_controller_s *c, int error);
+static inline INT pid_control_loop(const pid_controller_s *c, INT error);
+
 
 static inline void init_pi_controller(pi_controller *c,
-                                      unsigned int kp, 
-                                      unsigned int ki,
-                                      unsigned int dt, 
-                                      int sat_min, 
-                                      int sat_max) {
+                                      unsigned INT kp, 
+                                      unsigned INT ki,
+                                      unsigned INT dt, 
+                                      INT sat_min, 
+                                      INT sat_max) {
 
     c->p  = kp; 
     c->i  = ki; 
     c->dt = dt; 
-    c->_dti = ki*dt;
     
+    c->_dti = ki*dt;
+    c->_integral = 0;
+
     #ifdef SATURATION
     c->sat_min = sat_min;
     c->sat_max = sat_max; 
     #endif  /* SATURATION */
+
+    #ifdef ANTI_INTEGRATOR_SATURATION
+    c->_is_saturated = 0; 
+    #endif  /* ANTI_INTEGRATOR_SATURATION */
 }
 
 
-static inline int p_control_loop(const p_controller_s *c, int error) {
+static inline INT p_control_loop(const p_controller_s *c, INT error) {
     
     return (c->p) * error;  
 }
 
-static inline int pi_control_loop(const pi_controller_s *c, int error) {
+static inline INT pi_control_loop(const pi_controller_s *c, INT error) {
     
-    int setpoint; 
+    INT setpoint; 
 
     /* Update the integrated error only if the integrator is not saturated. */
     if((error * c->_is_saturated) < 0) {
@@ -187,12 +200,12 @@ static inline int pi_control_loop(const pi_controller_s *c, int error) {
     return setpoint; 
 }
 
-static inline int pid_control_loop(const pid_controller_s *c, int error) {
+static inline INT pid_control_loop(const pid_controller_s *c, INT error) {
 
-    static int integral   = 0; 
-    static int prev_error = 0;
+    static INT integral   = 0; 
+    static INT prev_error = 0;
 
-    int derivative = 0; 
+    INT derivative = 0; 
 
     integral  += error * (c->dt);
     derivative = (error - prev_error) / (c->dt); 
@@ -202,7 +215,7 @@ static inline int pid_control_loop(const pid_controller_s *c, int error) {
 
 #ifdef SATURATION
 
-static inline int _saturation(int value, int min, int max) {
+static inline INT _saturation(INT value, INT min, INT max) {
     
     if(value > max) {
         return max; 
@@ -219,7 +232,7 @@ static inline int _saturation(int value, int min, int max) {
 
 #ifdef ANTI_INTEGRATOR_WINDUP 
 
-static inline int _integrator_saturation(int value, int min, int max, int *is_saturated) {
+static inline INT _integrator_saturation(INT value, INT min, INT max, INT *is_saturated) {
 
     if(value > max) {
         *is_saturated = 1; 
