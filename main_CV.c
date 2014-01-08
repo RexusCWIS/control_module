@@ -50,8 +50,9 @@ static i2c_state_machine_e i2c_state;
  */
 static void timer_init(void);
 
-unsigned int LOstate = 0, SODSstate = 0, SOEstate = 0, ABstate = 0, ABflag = 0, conv = 0;
-unsigned int TimerLaser = 0, TimerHeater = 0, TimerConv = 0, TimerAB = 0, TimerAcquisition = 0;
+unsigned int LOstate = 0, SODSstate = 0, SOEstate = 0, DEBOUNCEstate = 0, DEBOUNCEflag = 0, conv = 0;
+unsigned int TimerLaser = 0, TimerHeater = 0, TimerDebounce = 0;
+unsigned long int TimerAcquisition = 0;
 
 void main(void)
 {
@@ -61,8 +62,6 @@ void main(void)
 	settings();	/* Register Init */
 	i2c_slave_init(I2C_ADDRESS); /* I2C Init */
 	
-	/* Check in settings.h , already implemented */
-	//timer_init(); /* TMR0 Init */
 
 	while(1)
 	{
@@ -74,9 +73,8 @@ void main(void)
 			/* Measure cell temperature */
 			ADCON0 = SENSOR0;
             GO = 1; 
-			while(GO) {
-			    acquisition_data.temperatures[0].data = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
-			}
+			while(GO)
+			acquisition_data.temperatures[0].data = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
 			
 			/* ONLY FOR TESTS - Send cell temperature through COM port */
 			sendtemp(acquisition_data.temperatures[0].data);
@@ -84,61 +82,91 @@ void main(void)
             /* Measure heater temperature */
 			ADCON0 = SENSOR1;
 			GO = 1;
-			while(GO) {
-			    acquisition_data.temperatures[1].data = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
-			}
-			
+			while(GO)
+			acquisition_data.temperatures[1].data = (((unsigned int) ADRESH) << 8) + (unsigned int) ADRESL;
+
 			/* ONLY FOR TESTS - Send cell temperature through COM port */
 			sendtemp(acquisition_data.temperatures[1].data);
 		}
 	
 		/* LO signal */
-		if((LO) && (!LOenable))
+		if((LO)&&(!LOenable))
 		{
-			ABstate = 1;
-			if((LO) && (!LOenable) && (ABflag)) {
-				LOstate = 1;
-				LOenable = 1;
-				LO_LED = 1;
-				ABflag = 0;
+			DEBOUNCEstate=1;
+			if((LO)&&(!LOenable)&&(DEBOUNCEflag)) 
+			{
+				LOstate=1;
+				LOenable=1;
+				LO_LED=1;
+				DEBOUNCEflag=0;
 				
 				/* LO commands */
+				TimerLaser=acquisition_data.time+ON_LASER; /* Set time for laser on */
 			}
 		}
 		
 		/* SODS signal */
-		if((SODS) && (LOstate) && (!SODSenable)) {
-			ABstate = 1;
-			if((SODS) && (LOstate) && (!SODSenable) && (ABflag)) {
-				SODSstate = 1;
-				SODSenable = 1;
-				SODS_LED = 1;
-				ABflag = 0;	
+		if((SODS)&&(LOenable)&&(!SODSenable))
+		{
+			DEBOUNCEstate=1;
+			if((SODS)&&(LOenable)&&(!SODSenable)&&(DEBOUNCEflag)) 
+			{
+				SODSstate=1;
+				SODSenable=1;
+				SODS_LED=1;
+				DEBOUNCEflag=0;
+				
+				LOstate=0;
+				LO_LED=0;
+				
 				
 				/* SODS commands */
-				camera_order = START_ACQUISITION;
+				camera_order=START_ACQUISITION; /* Camera start acquisition */
+				TimerAcquisition=acquisition_data.time+OFF_ACQUISITION; /* Set time for stop acquisition */
 			}
 		}
 		
 		/* SOE signal */
-		if((SOE) && (SODSstate) && (LOstate) && (!SOEenable)) {
-			ABstate = 1;
-			
-            if((SOE) && (SODSstate) && (LOstate) && (!SOEenable) && (ABflag)) {
-				SOEstate = 1;
-				SOEenable = 1;
-				SOE_LED = 1;
-				ABflag = 0;
+		if((SOE)&&(SODSenable)&&(LOenable)&&(!SOEenable))
+		{
+			DEBOUNCEstate=1;
+			if((SOE)&&(SODSenable)&&(LOenable)&&(!SOEenable)&&(DEBOUNCEflag)) 
+			{
+				SOEstate=1;
+				SOEenable=1;
+				SOE_LED=1;
+				DEBOUNCEflag=0;
+				
+				SODSstate=0;
+				SODS_LED=0;
 				
 				/* SOE commands */
-				HEATER = 255;
+				TimerHeater=acquisition_data.time+OFF_HEATER; /* Set time for heater off */
+				
+			}
+			
+			if(SOEstate)
+			{
+				/* Heater control loop */
+				if (acquisition_data.time%RFH_HEATER==0) 
+				{
+					/* Compute the error between the setpoint and the actual temperature */
+					heater_power = TEMPERATURE_CONTROL_SETPOINT -(int) acquisition_data.temperatures[0].data;
+					/* Multiply it by the proportional gain */
+					heater_power *= TEMPERATURE_CONTROL_PGAIN;
+
+					/* Apply system limits (no cooling, 8-bit duty cycle) */
+					heater_power = (heater_power < 0) ? 0 : heater_power; 
+					HEATER = (unsigned char) (heater_power && 0xFFu); 
+				}
 			}
 		}
 	}	
 }
 
 /* Send temp value through COM port */
-void sendtemp(int temp) {
+void sendtemp(int temp) 
+{
 
 	unsigned char tempH, tempL;	
 
@@ -154,7 +182,8 @@ void sendtemp(int temp) {
 }
 
 /* Put char on COM port */
-void putch(unsigned char byte) {
+void putch(unsigned char byte) 
+{
 
 	/* output one byte */
 	while(!TXIF)	/* set when register is empty */
@@ -171,16 +200,11 @@ unsigned char getch()
 	return RCREG;	
 }
 
-/* Echo char on COM port */
-unsigned char getche(void) {
-	unsigned char c;
-	putch(c = getch());
-	return c;
-}
-
 /* ISR */
-void interrupt isr(void) {
-	if (TMR0IF) { /* TMR0 overflow interrupt */
+void interrupt isr(void) 
+{
+	if (TMR0IF) 
+	{ /* TMR0 overflow interrupt */
 		
         TMR0IF = 0; /* Timer interrupt flag reset */
 		
@@ -191,36 +215,42 @@ void interrupt isr(void) {
 		acquisition_data.time++; /* Global time */
 		
 		/* Timer for laser on */
-		if (acquisition_data.time == TimerLaser) {
+		if (acquisition_data.time == TimerLaser) 
+		{
 			LASER = 1; /* Laser power on */
 		}
 		
 		/* Timer for stop the camera acquisition */
-		if(acquisition_data.time == TimerAcquisition) {
+		if(acquisition_data.time == TimerAcquisition) 
+		{
 			camera_order = STOP_ACQUISITION;
 		}
 		
 		/* Timer for heater off */
-		if(acquisition_data.time == TimerHeater) {
+		if(acquisition_data.time == TimerHeater) 
+		{
 			HEATER = 0;
 		}
 		
 		/* Timer for refresh ADC */
-		if ((acquisition_data.time % RFH_ADC) == 0) {
+		if ((acquisition_data.time % RFH_ADC) == 0) 
+		{
 			conv = 1; /* Starts adc conversion */
 		}
 		
 		/* Timer for debounce system */
-		if(DEBOUNCEstate) {
+		if(DEBOUNCEstate) 
+		{
 			TimerDebounce++;
 			DEBOUNCEstate = 0;
 		}
-
-        else {
+        else 
+		{
 			TimerDebounce = 0;
 		}
 
-		if(TimerDebounce >= DEBOUNCE) {
+		if(TimerDebounce >= DEBOUNCE) 
+		{
 			DEBOUNCEflag = 1;
 			TimerDebounce = 0;
 		}
@@ -305,20 +335,4 @@ void interrupt isr(void) {
         SSPCON1bits.CKP = 1;    /* Release I2C clock */
         SSPIF = 0;              /* Clear I2C interrupt flag */
     }
-}
-
-static void timer_init(void) {
-
-    /* Set the internal oscillator to 8MHz */
-    OSCCON |= 0x70;  
-
-    /* Use timer 0 to generate an interrupt each second */
-    T0CONbits.TMR0ON = 0;   /* Disable timer */
-    T0CON &= ~0xF8;         /* Set the timer in 16-bit mode */
-    T0CON |= 0x7;           /* Set a 1:256 prescaler */
-
-    TMR0H = T0_RELOAD_HIGH;
-    TMR0L = T0_RELOAD_LOW;
-
-    T0CONbits.TMR0ON = 1;   /* Restart timer */
 }

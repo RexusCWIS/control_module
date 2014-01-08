@@ -44,11 +44,8 @@
 //FUNCTION PROTOTYPES//
 void settings(void);
 void main(void);
-void read_ad (int, char);
 void interrupt isr(void);
-void DelayMillisec(int);
 void sendtemp(int);
-unsigned int bin_dec(unsigned int bin);
 
 // PORTS schematic //
 
