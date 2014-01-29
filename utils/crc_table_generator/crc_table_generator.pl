@@ -7,7 +7,6 @@ use warnings;
 my $width    = 16;
 # Top bit index of a $width bit wide variable
 my $top_bit  = (1 << ($width - 1));
-print "Top bit: $top_bit\n"; 
 # 16-bit binary mask 
 my $bit_mask = 0xFFFF;  
 
@@ -16,8 +15,6 @@ if($polynomial =~ m/0x/) {
     $polynomial =~ s/0x(.*)/$1/;
     $polynomial = hex($polynomial);
 }
-
-print "Polynomial: $polynomial\n"; 
 
 my @crc_table = (); 
 
@@ -42,11 +39,11 @@ for(my $dividend = 0; $dividend < 256; $dividend++) {
 # Write data to the output file
 
 # Create the output file
-open( OUTFD, '>>', $file )
+open(OUTFD, '>>', $file)
     or die("Couldn't create file $file: $!");      # Create the output file
-open( OUTFD, '>', $file );
+open(OUTFD, '>', $file);
 
-my $header = "/* Automatically generated file: do not modify.\n * CRC polynomial: $ARGV[0].\n */";
+my $header = "/*\n * Automatically generated file: do not modify.\n * CRC polynomial: $ARGV[0].\n */";
 
 # Print comment header.
 print OUTFD $header, "\n\n"; 
@@ -65,4 +62,6 @@ for(my $index = 0; $index < 256; $index++) {
     }
 }
 print OUTFD "\n};";
+
+close(OUTFD);
 
