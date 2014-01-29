@@ -43,7 +43,7 @@ open(OUTFD, '>>', $file)
     or die("Couldn't create file $file: $!");      # Create the output file
 open(OUTFD, '>', $file);
 
-my $header = "/*\n * Automatically generated file: do not modify.\n * CRC polynomial: $ARGV[0].\n */";
+my $header = "/*\n * Automatically generated file: do not edit manually.\n * CRC polynomial: $ARGV[0].\n */";
 
 # Print comment header.
 print OUTFD $header, "\n\n"; 
@@ -53,10 +53,11 @@ my $line_counter = 8;
 
 print OUTFD 'const uint8_t crc_table[256] = {', "\n\t"; 
 for(my $index = 0; $index < 256; $index++) {
-    printf OUTFD "0x%04xu, ", $crc_table[$index];
+    printf OUTFD "0x%04xu", $crc_table[$index];
+    print OUTFD ', ' unless ($index == 255); 
     $line_counter--;
 
-    if(($line_counter == 0) && ($index < 256)) {
+    if(($line_counter == 0) && ($index < 255)) {
         print OUTFD "\n\t"; 
         $line_counter = 8; 
     }
