@@ -46,12 +46,17 @@ open(OUTFD, '>', $file);
 my $header = "/*\n * Automatically generated file: do not edit manually.\n * CRC polynomial: $ARGV[0].\n */";
 
 # Print comment header.
-print OUTFD $header, "\n\n"; 
+print OUTFD $header, "\n\n\n"; 
+
+# C/C++ isolation
+print OUTFD "#ifdef _cplusplus\nextern \"C\" {\n#endif  /* _cplusplus */\n\n"; 
+
+print OUTFD "#include <stdint.h>\n\n";
 
 # Print CRC table as a C array.
 my $line_counter = 8;
 
-print OUTFD 'const uint8_t crc_table[256] = {', "\n\t"; 
+print OUTFD 'const uint16_t crc_table[256] = {', "\n\t"; 
 for(my $index = 0; $index < 256; $index++) {
     printf OUTFD "0x%04xu", $crc_table[$index];
     print OUTFD ', ' unless ($index == 255); 
@@ -62,7 +67,9 @@ for(my $index = 0; $index < 256; $index++) {
         $line_counter = 8; 
     }
 }
-print OUTFD "\n};";
+print OUTFD "\n};\n\n";
+
+print OUTFD "#ifdef _cplusplus\n}\n#endif  /* _cplusplus */\n"; 
 
 close(OUTFD);
 
