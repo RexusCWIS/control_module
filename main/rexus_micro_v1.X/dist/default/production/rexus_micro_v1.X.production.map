@@ -2,10 +2,10 @@ Microchip MPLAB XC8 Compiler V1.20 ()
 
 Linker command line:
 
---edf=/opt/microchip/xc8/v1.20/dat/en_msgs.txt -cs \
+--edf=/Applications/microchip/xc8/v1.20/dat/en_msgs.txt -cs \
   -h+dist/default/production/rexus_micro_v1.X.production.sym \
   --cmf=dist/default/production/rexus_micro_v1.X.production.cmf -z \
-  -Q18F2520 -o/tmp/cgtGXryfl \
+  -Q18F2520 -o/tmp/cgtWszpPt \
   -Mdist/default/production/rexus_micro_v1.X.production.map -E1 -ver=XC8 \
   -ACODE=00h-07FFFh -ACONST=00h-07FFFh -ASMALLCONST=0600h-06FFhx122 \
   -AMEDIUMCONST=0600h-07FFFh -ACOMRAM=01h-07Fh -AABS1=00h-05FFh \
@@ -20,7 +20,7 @@ Linker command line:
   -prdata=COMRAM,nvrram=COMRAM,nvbit=COMRAM,rbss=COMRAM,rbit=COMRAM \
   -pfarbss=FARRAM,fardata=FARRAM,nvFARRAM=FARRAM \
   -pintsave_regs=BIGRAM,bigbss=BIGRAM,bigdata=BIGRAM -pbss=RAM \
-  -pidata=CODE,irdata=CODE,ibigdata=CODE,ifardata=CODE /tmp/cgtCdxDKn.obj \
+  -pidata=CODE,irdata=CODE,ibigdata=CODE,ifardata=CODE /tmp/cgti7PpnG.obj \
   dist/default/production/rexus_micro_v1.X.production.obj 
 
 Object code version is 3.11
@@ -33,7 +33,7 @@ Call graph: (short form)
 
 
                 Name                               Link     Load   Length Selector   Space Scale
-/tmp/cgtCdxDKn.obj
+/tmp/cgti7PpnG.obj
                 end_init                             18       18        4        4       0
                 reset_vec                             0        0        4        0       0
                 config                           300000   300000        E   300000       0
@@ -502,7 +502,7 @@ Total ram usage:       13 bytes
 
  *************** function ___wmul *****************
  Defined at:
-		line 5 in file "/opt/microchip/xc8/v1.20/sources/common/wmul.c"
+		line 5 in file "/Applications/microchip/xc8/v1.20/sources/common/wmul.c"
  Parameters:    Size  Location     Type
   multiplier      2   28[COMRAM] unsigned int 
   multiplicand    2   30[COMRAM] unsigned int 
@@ -533,7 +533,7 @@ Total ram usage:        6 bytes
 
  *************** function ___llmod *****************
  Defined at:
-		line 10 in file "/opt/microchip/xc8/v1.20/sources/common/llmod.c"
+		line 10 in file "/Applications/microchip/xc8/v1.20/sources/common/llmod.c"
  Parameters:    Size  Location     Type
   dividend        4   28[COMRAM] unsigned long 
   divisor         4   32[COMRAM] unsigned long 
@@ -685,7 +685,7 @@ Total ram usage:       18 bytes
 
  *************** function i2___llmod *****************
  Defined at:
-		line 10 in file "/opt/microchip/xc8/v1.20/sources/common/llmod.c"
+		line 10 in file "/Applications/microchip/xc8/v1.20/sources/common/llmod.c"
  Parameters:    Size  Location     Type
   __llmod         4    0[COMRAM] unsigned long 
   __llmod         4    4[COMRAM] unsigned long 
@@ -735,15 +735,15 @@ shared estimated size: 162
 
 ../main_CV.c estimated size: 1520
 
-/opt/microchip/xc8/v1.20/sources/common/llmod.c
+/Applications/microchip/xc8/v1.20/sources/common/llmod.c
 		___llmod       		CODE           	05DE	0000	106
 
-/opt/microchip/xc8/v1.20/sources/common/llmod.c estimated size: 106
+/Applications/microchip/xc8/v1.20/sources/common/llmod.c estimated size: 106
 
-/opt/microchip/xc8/v1.20/sources/common/wmul.c
+/Applications/microchip/xc8/v1.20/sources/common/wmul.c
 		___wmul        		CODE           	0746	0000	58
 
-/opt/microchip/xc8/v1.20/sources/common/wmul.c estimated size: 58
+/Applications/microchip/xc8/v1.20/sources/common/wmul.c estimated size: 58
 
 ../settings.h
 		_settings      		CODE           	06B2	0000	86

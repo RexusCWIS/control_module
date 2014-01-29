@@ -1,5 +1,5 @@
 Version 3.2 HI-TECH Software Intermediate Code
-"44 /opt/microchip/xc8/v1.20/include/pic18f2520.h
+"44 /Applications/microchip/xc8/v1.20/include/pic18f2520.h
 [v _PORTA `Vuc ~T0 @X0 0 e@3968 ]
 "1284
 [v _TRISA `Vuc ~T0 @X0 0 e@3986 ]
@@ -65,7 +65,7 @@ Version 3.2 HI-TECH Software Intermediate Code
 [p mainexit ]
 "24 ../../drivers/i2c_slave.h
 [v _i2c_slave_init `(v ~T0 @X0 0 ef1`uc ]
-"3970 /opt/microchip/xc8/v1.20/include/pic18f2520.h
+"3970 /Applications/microchip/xc8/v1.20/include/pic18f2520.h
 [v _ADCON0 `Vuc ~T0 @X0 0 e@4034 ]
 "6365
 [v _GO `Vb ~T0 @X0 0 e@32273 ]
@@ -77,7 +77,7 @@ Version 3.2 HI-TECH Software Intermediate Code
 [v _sendtemp `(v ~T0 @X0 0 ef1`i ]
 [t ~ __deprecated__ ]
 [t T14 __deprecated__ ]
-"6713 /opt/microchip/xc8/v1.20/include/pic18f2520.h
+"6713 /Applications/microchip/xc8/v1.20/include/pic18f2520.h
 [v _RB3 `Vb ~T14 @X0 0 e@31755 ]
 "6717
 [v _RB5 `Vb ~T14 @X0 0 e@31757 ]
@@ -178,7 +178,7 @@ Version 3.2 HI-TECH Software Intermediate Code
 "6159
 [v _BCLIF `Vb ~T0 @X0 0 e@32011 ]
 [; ;pic18f2520.h: 44: extern volatile unsigned char PORTA @ 0xF80;
-"46 /opt/microchip/xc8/v1.20/include/pic18f2520.h
+"46 /Applications/microchip/xc8/v1.20/include/pic18f2520.h
 [; ;pic18f2520.h: 46: asm("PORTA equ 0F80h");
 [; <" PORTA equ 0F80h ;# ">
 [; ;pic18f2520.h: 49: typedef union {
