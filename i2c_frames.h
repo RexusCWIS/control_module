@@ -31,11 +31,22 @@ typedef enum {
  *          the I2C bus master performs a read operation. 
  */
 typedef struct {
-    unsigned long time;                      /**< @brief Time at which data acquisition occured. */
+    unsigned long time;                     /**< @brief Time at which data acquisition occured. */
     temperature_data_s temperatures[3];     /**< @brief Temperature sensors data. */
     pressure_data_s pressure;               /**< @brief Pressure sensor data. */
     unsigned char status[2];                /**< @brief Control module status. */
-} i2c_frame_s; 
+} i2c_frame_s;
+
+typedef struct {
+    unsigned int nb_of_images;
+    unsigned char framerate;
+    unsigned char status;
+} i2c_camera_data_s;
+
+typedef struct {
+    i2c_frame_s acquired_data;
+    i2c_camera_data_s camera_data;
+} serial_frame_s; 
 
 #endif  /* DEF_I2C_FRAMES_H */
 
