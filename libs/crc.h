@@ -6,16 +6,18 @@
 #ifndef DEF_CRC_H
 #define DEF_CRC_H
 
-typedef crc uint16_t;
+#include <stdint.h>
 
-#define WIDTH   (8 * sizeof(crc))
+typedef uint16_t crc_t;
 
-extern crc crc_table[256]; 
+#define WIDTH   (8 * sizeof(crc_t))
 
-static inline crc(uint8_t const msg[], uint8_t size) {
+extern const crc_t crc_table[256]; 
+
+static inline crc_t crc(uint8_t const msg[], uint8_t size) {
 
     uint8_t data; 
-    crc remainder = 0; 
+    crc_t remainder = 0; 
 
     for(uint8_t byte = 0; byte < size; byte++) {
         
