@@ -1,9 +1,0 @@
-_settings: CODE, 1168 0 78
-_main: CODE, 552 0 814
-_sendtemp: CODE, 1340 0 26
-_isr: CODE, 8 0 544
-_i2c_slave_init: CODE, 1366 0 20
-i2___llmod: CODE, 972 0 98
-___llmod: CODE, 1070 0 98
-___wmul: CODE, 1296 0 44
-Total: 1722
