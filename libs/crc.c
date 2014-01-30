@@ -3,11 +3,12 @@
  * @brief Cyclic Redundancy Check algorithm implementation. 
  */
 
-#include "libs/crc.h"
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif  /* _cplusplus */
+
+#include "libs/crc.h"
 
 extern const crc_t crc_table[256]; 
 
@@ -26,7 +27,7 @@ crc_t crc(uint8_t const msg[], uint8_t size) {
     return remainder; 
 }
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif  /* _cplusplus */
 

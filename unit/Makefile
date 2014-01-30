@@ -3,6 +3,7 @@
 # Implicit rules desactivation
 
 TOPDIR   = ..
+TESTDIR  = $(TOPDIR)/unit
 GTESTDIR = gtest-svn
 LIBGTEST = $(GTESTDIR)/make/libgtest.a
 
@@ -16,7 +17,7 @@ LIBS = $(LIBGTEST) -lpthread
 
 PERL = perl
 
-CSRC = crc_table.c $(TOPDIR)/libs/crc.c 
+CSRC = $(TESTDIR)/crc_test_table.c $(TOPDIR)/libs/crc.c 
 TESTSRC = crc_test.cpp crc16.cpp
 
 VPATH += $(sort $(dir $(CSRC) $(TESTSRC)))
@@ -47,7 +48,7 @@ $(BUILDDIR)/%.o: %.c | $(BUILDDIR)
 $(BUILDDIR): 
 	mkdir $@
 
-crc_table.c: 
+$(TESTDIR)/crc_test_table.c: 
 	$(PERL) $(TOPDIR)/utils/crc_table_generator.pl 0x1021 $@ 
 
 clean:

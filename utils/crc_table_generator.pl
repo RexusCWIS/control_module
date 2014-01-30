@@ -49,14 +49,14 @@ my $header = "/*\n * Automatically generated file: do not edit manually.\n * CRC
 print OUTFD $header, "\n\n\n"; 
 
 # C/C++ isolation
-print OUTFD "#ifdef _cplusplus\nextern \"C\" {\n#endif  /* _cplusplus */\n\n"; 
+print OUTFD "#ifdef __cplusplus\nextern \"C\" {\n#define CONST   extern const\n#else\n#define CONST   const\n#endif  /* __cplusplus */\n\n"; 
 
 print OUTFD "#include <stdint.h>\n\n";
 
 # Print CRC table as a C array.
 my $line_counter = 8;
 
-print OUTFD 'extern const uint16_t crc_table[256] = {', "\n\t"; 
+print OUTFD 'CONST uint16_t crc_table[256] = {', "\n\t"; 
 for(my $index = 0; $index < 256; $index++) {
     printf OUTFD "0x%04Xu", $crc_table[$index];
     print OUTFD ', ' unless ($index == 255); 
@@ -69,7 +69,7 @@ for(my $index = 0; $index < 256; $index++) {
 }
 print OUTFD "\n};\n\n";
 
-print OUTFD "#ifdef _cplusplus\n}\n#endif  /* _cplusplus */\n"; 
+print OUTFD "#ifdef __cplusplus\n}\n#endif  /* __cplusplus */\n"; 
 
 close(OUTFD);
 
