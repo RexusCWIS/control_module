@@ -6,6 +6,7 @@ TOPDIR   = ..
 GTESTDIR = gtest-svn
 LIBGTEST = $(GTESTDIR)/make/libgtest.a
 
+BUILDDIR = build
 APP = unit.out
 
 CC  = gcc
@@ -16,8 +17,9 @@ LIBS = $(LIBGTEST) -lpthread
 CSRC = $(TOPDIR)/libs/crc_table.c 
 TESTSRC = crc_test.cpp crc16.cpp
 
-OBJ = $(CSRC:.c=.o)    	\
-      $(TESTSRC:.cpp=.o)
+VPATH += $(sort $(dir $(CSRC) $(TESTSRC)))
+
+OBJ = $(addprefix $(BUILDDIR)/, $(notdir $(CSRC:.c=.o) $(TESTSRC:.cpp=.o)))
 
 all: $(APP)
 
@@ -34,11 +36,14 @@ $(LIBGTEST): $(GTESTDIR)
 $(APP): $(LIBGTEST) $(OBJ)
 	g++ -g -o $@ $(OBJ) $(LIBS)
 
-%.o: %.cpp
+$(BUILDDIR)/%.o: %.cpp | $(BUILDDIR)
 	$(CXX) -c -g $(INCFLAGS) -o $@ $<
 
-%.o: %.c
+$(BUILDDIR)/%.o: %.c | $(BUILDDIR)
 	$(CC) -c -g $(INCFLAGS) -o $@ $<
+
+$(BUILDDIR): 
+	mkdir $@
 
 clean:
 	rm -rf $(OBJ)
