@@ -54,5 +54,5 @@ clean:
 	rm -rf $(OBJ)
 
 distclean:
-	rm -rf $(APP) $(GTESTDIR)
+	rm -rf $(APP) $(GTESTDIR) crc_table.c
 
