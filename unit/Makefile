@@ -2,19 +2,21 @@
 
 # Implicit rules desactivation
 
-TOPDIR   = ../..
+TOPDIR   = ../
 GTESTDIR = gtest-svn
 LIBGTEST = $(GTESTDIR)/make/libgtest.a
 
 APP = unit.out
 
+CC  = gcc
 CXX = g++
 INCFLAGS = -I$(TOPDIR) -Igtest-svn/include -I/opt/local/include
 LIBS = $(LIBGTEST) -lpthread 
 
+CSRC = $(TOPDIR)/libs/crc_table.c
 TESTSRC = crc_test.cpp
 
-OBJ = $(SRC:.cpp=.o)    	\
+OBJ = $(CSRC:.c=.o)    	\
       $(TESTSRC:.cpp=.o)
 
 all: $(APP)
@@ -34,6 +36,9 @@ $(APP): $(LIBGTEST) $(OBJ)
 
 %.o: %.cpp
 	$(CXX) -c -g $(INCFLAGS) -o $@ $<
+
+%.o: %.c
+	$(CC) -c -g $(INCFLAGS) -o $@ $<
 
 clean:
 	rm -rf $(OBJ)
