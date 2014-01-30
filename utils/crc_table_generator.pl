@@ -58,7 +58,7 @@ my $line_counter = 8;
 
 print OUTFD 'const uint16_t crc_table[256] = {', "\n\t"; 
 for(my $index = 0; $index < 256; $index++) {
-    printf OUTFD "0x%04xu", $crc_table[$index];
+    printf OUTFD "0x%04Xu", $crc_table[$index];
     print OUTFD ', ' unless ($index == 255); 
     $line_counter--;
 
