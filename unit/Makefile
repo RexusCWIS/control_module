@@ -16,7 +16,7 @@ LIBS = $(LIBGTEST) -lpthread
 
 PERL = perl
 
-CSRC = crc_table.c 
+CSRC = crc_table.c $(TOPDIR)/libs/crc.c 
 TESTSRC = crc_test.cpp crc16.cpp
 
 VPATH += $(sort $(dir $(CSRC) $(TESTSRC)))
@@ -42,7 +42,7 @@ $(BUILDDIR)/%.o: %.cpp | $(BUILDDIR)
 	$(CXX) -c -g $(INCFLAGS) -o $@ $<
 
 $(BUILDDIR)/%.o: %.c | $(BUILDDIR)
-	$(CC) -c -g $(INCFLAGS) -o $@ $<
+	$(CXX) -c -g $(INCFLAGS) -o $@ $<
 
 $(BUILDDIR): 
 	mkdir $@
