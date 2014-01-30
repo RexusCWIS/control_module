@@ -1,3 +1,6 @@
 # Google Unit Test Framework
 gtest-svn/
 
+# Automatically generated CRC table
+crc_table.c
+

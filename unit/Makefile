@@ -14,7 +14,9 @@ CXX = g++
 INCFLAGS = -I$(TOPDIR) -Igtest-svn/include -I/opt/local/include
 LIBS = $(LIBGTEST) -lpthread 
 
-CSRC = $(TOPDIR)/libs/crc_table.c 
+PERL = perl
+
+CSRC = crc_table.c 
 TESTSRC = crc_test.cpp crc16.cpp
 
 VPATH += $(sort $(dir $(CSRC) $(TESTSRC)))
@@ -44,6 +46,9 @@ $(BUILDDIR)/%.o: %.c | $(BUILDDIR)
 
 $(BUILDDIR): 
 	mkdir $@
+
+crc_table.c: 
+	$(PERL) $(TOPDIR)/utils/crc_table_generator.pl 0x1021 $@ 
 
 clean:
 	rm -rf $(OBJ)
