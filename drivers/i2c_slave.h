@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
     typedef enum {
         I2C_SET_DEV_REG,
         I2C_DATA
@@ -21,7 +23,7 @@ extern "C" {
      * @brief Initializes the microcontroller as a I2C slave.
      * @param id    ID on the I2C bus. 
      */
-    void i2c_slave_init(unsigned char id);
+    void i2c_slave_init(uint8_t id);
 
 
 

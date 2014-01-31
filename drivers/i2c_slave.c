@@ -2,7 +2,7 @@
 #include "i2c_slave.h"
 
 
-void i2c_slave_init(unsigned char id) {
+void i2c_slave_init(uint8_t id) {
 
     SSPSTAT = 0x80;     /* Deactivate slew control */
     SSPCON1 = 0x36;     /* Enable serial port, I2C slave mode, 7-bit address */

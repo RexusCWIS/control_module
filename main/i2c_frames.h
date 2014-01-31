@@ -6,17 +6,14 @@
 #ifndef DEF_I2C_FRAMES_H
 #define DEF_I2C_FRAMES_H
 
-/** @brief Specifies that the data frame contains values acquired by the sensors. */
-#define DATA    0x0
-/** @brief Specifies that the data frame contains orders to the acquisition board. */
-#define ORDER   0xFF
+#include <stdint.h>
 
 typedef struct {
-    unsigned int data;
+    uint16_t data;
 }pressure_data_s;
 
 typedef struct {
-    unsigned int data; 
+    uint16_t data;
 }temperature_data_s; 
 
 typedef enum {
@@ -31,16 +28,16 @@ typedef enum {
  *          the I2C bus master performs a read operation. 
  */
 typedef struct {
-    unsigned long time;                     /**< @brief Time at which data acquisition occured. */
-    temperature_data_s temperatures[3];     /**< @brief Temperature sensors data. */
-    pressure_data_s pressure;               /**< @brief Pressure sensor data. */
-    unsigned char status[2];                /**< @brief Control module status. */
+    uint32_t time;                      /**< @brief Time at which data acquisition occured. */
+    temperature_data_s temperatures[3]; /**< @brief Temperature sensors data. */
+    pressure_data_s pressure;           /**< @brief Pressure sensor data. */
+    uint8_t status[2];                  /**< @brief Control module status. */
 } i2c_frame_s;
 
 typedef struct {
-    unsigned int nb_of_images;
-    unsigned char framerate;
-    unsigned char status;
+    uint16_t nb_of_images;
+    uint8_t framerate;
+    uint8_t status;
 } i2c_camera_data_s;
 
 typedef struct {
