@@ -9,7 +9,7 @@
 #define XTAL_FREQ 20MHZ
 
 #include "config/pic18f2520_config.h"
-#include "settings.h"
+#include "config/board_config.h"
 #include "drivers/i2c_slave.h"
 #include "i2c_frames.h"
 
@@ -59,7 +59,7 @@ void main(void)
 	unsigned int LOenable = 0, SODSenable = 0, SOEenable = 0;
 	unsigned int t_cell = 0, t_heat = 0;
 	
-	settings();	/* Register Init */
+	board_config();              /* Register Init */
 	i2c_slave_init(I2C_ADDRESS); /* I2C Init */
 	
 
