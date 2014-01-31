@@ -52,7 +52,7 @@ static i2c_state_machine_e i2c_state;
 static void timer_init(void);
 
 static uint16_t LOstate = 0, SODSstate = 0, SOEstate = 0, DEBOUNCEstate = 0,
-                DEBOUNCEflag = 0, conv = 0;
+                DEBOUNCEflag = 0, adc_conv_flag = 0;
 static uint16_t TimerLaser = 0, TimerHeater = 0, TimerDebounce = 0;
 static uint32_t TimerAcquisition = 0;
 
@@ -67,9 +67,9 @@ void main(void) {
     while (1) {
 
         /* Sensor data acquisition loop */
-        if (conv) {
+        if (adc_conv_flag) {
             
-            conv = 0; /* reset conversion flag */
+            adc_conv_flag = 0; /* reset conversion flag */
 
             /* Measure cell temperature */
             ADCON0 = SENSOR0;
@@ -77,17 +77,11 @@ void main(void) {
             while (GO)
                 acquisition_data.temperatures[0].data = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
 
-            /* ONLY FOR TESTS - Send cell temperature through COM port */
-            sendtemp(acquisition_data.temperatures[0].data);
-
             /* Measure heater temperature */
             ADCON0 = SENSOR1;
             GO = 1;
             while (GO)
                 acquisition_data.temperatures[1].data = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
-
-            /* ONLY FOR TESTS - Send cell temperature through COM port */
-            sendtemp(acquisition_data.temperatures[1].data);
         }
 
         /* LO signal */
@@ -157,42 +151,6 @@ void main(void) {
     }
 }
 
-/* Send temp value through COM port */
-void sendtemp(int temp) 
-{
-
-	unsigned char tempH, tempL;	
-
-    tempH = (temp >> 8);
-	while(!TXIF)
-	continue;
-	TXREG = tempH;
-	
-	tempL = temp;
-	while(!TXIF)
-	continue;
-	TXREG = tempL;
-}
-
-/* Put char on COM port */
-void putch(unsigned char byte) 
-{
-
-	/* output one byte */
-	while(!TXIF)	/* set when register is empty */
-		continue;
-	TXREG = byte;
-}
-
-/* Get char on COM port */
-unsigned char getch() 
-{
-	/* retrieve one byte */
-	while(!RCIF)	/* set when register is not empty */
-		continue;
-	return RCREG;	
-}
-
 /* ISR */
 void interrupt isr(void) 
 {
@@ -222,9 +180,9 @@ void interrupt isr(void)
             HEATER = 0;
         }
 
-        /* Timer for refresh ADC */
+        /* ADC conversion rate */
         if ((acquisition_data.time % RFH_ADC) == 0) {
-            conv = 1; /* Starts adc conversion */
+            adc_conv_flag = 1; /* Starts adc conversion */
         }
 
         /* Timer for debounce system */
