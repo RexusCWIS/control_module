@@ -2,5 +2,5 @@
 gtest-svn/
 
 # Automatically generated CRC table
-crc_table.c
+crc_test_table.c
 

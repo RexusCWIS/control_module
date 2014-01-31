@@ -8,6 +8,7 @@
       <itemPath>../settings.h</itemPath>
       <itemPath>../../drivers/i2c_slave.h</itemPath>
       <itemPath>../../config/pic18f2520_config.h</itemPath>
+      <itemPath>../../libs/crc.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -18,6 +19,8 @@
                    projectFiles="true">
       <itemPath>../main_CV.c</itemPath>
       <itemPath>../../drivers/i2c_slave.c</itemPath>
+      <itemPath>../../libs/crc.c</itemPath>
+      <itemPath>../../libs/crc_table.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

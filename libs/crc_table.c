@@ -4,13 +4,16 @@
  */
 
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
+#define CONST   extern const
+#else
+#define CONST   const
 #endif  /* _cplusplus */
 
 #include <stdint.h>
 
-extern const uint16_t crc_table[256] = {
+CONST uint16_t crc_table[256] = {
 	0x0000u, 0x1021u, 0x2042u, 0x3063u, 0x4084u, 0x50A5u, 0x60C6u, 0x70E7u, 
 	0x8108u, 0x9129u, 0xA14Au, 0xB16Bu, 0xC18Cu, 0xD1ADu, 0xE1CEu, 0xF1EFu, 
 	0x1231u, 0x0210u, 0x3273u, 0x2252u, 0x52B5u, 0x4294u, 0x72F7u, 0x62D6u, 
@@ -45,6 +48,6 @@ extern const uint16_t crc_table[256] = {
 	0x6E17u, 0x7E36u, 0x4E55u, 0x5E74u, 0x2E93u, 0x3EB2u, 0x0ED1u, 0x1EF0u
 };
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif  /* _cplusplus */

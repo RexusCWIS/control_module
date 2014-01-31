@@ -3,7 +3,7 @@
 # Implicit rules desactivation
 
 TOPDIR   = ..
-TESTDIR  = $(TOPDIR)/unit
+TESTDIR  = $(shell pwd)
 GTESTDIR = gtest-svn
 LIBGTEST = $(GTESTDIR)/make/libgtest.a
 
@@ -55,5 +55,5 @@ clean:
 	rm -rf $(OBJ)
 
 distclean:
-	rm -rf $(APP) $(GTESTDIR) crc_table.c
+	rm -rf $(APP) $(GTESTDIR) crc_test_table.c
 
