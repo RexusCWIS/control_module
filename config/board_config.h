@@ -39,12 +39,12 @@
 #define I2C_ADDRESS 0x22u
 
 // 1 unit = 1ms //
-#define ON_LASER    5000        // Timer for Laser Power On after LO (default 5000)
-#define OFF_HEATER  20000       //Timer for Heater Power Off after predefined time (default 15000)
+#define TIME_LASER_ON    5000   // Timer for Laser Power On after LO (default 5000)
+#define TIME_HEATER_OFF  20000  //Timer for Heater Power Off after predefined time (default 15000)
 #define RFH_HEATER  5           //Timer for refresh heater power (default X)
 #define RFH_ADC     100         //Timer for refresh ADC (default 100)
-#define DEBOUNCE    50          //Timer for debounce system (default 50)
-#define OFF_ACQUISITION     140000  //Timer for stop the camera acquisition (default 140000)
+#define TIME_DEBOUNCE    50     //Timer for debounce system (default 50)
+#define TIME_ACQUISITION_OFF    140000  //Timer for stop the camera acquisition (default 140000)
 
 //FUNCTION PROTOTYPES//
 void board_config(void);

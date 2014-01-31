@@ -101,7 +101,7 @@ void main(void)
 				DEBOUNCEflag=0;
 				
 				/* LO commands */
-				TimerLaser=acquisition_data.time+ON_LASER; /* Set time for laser on */
+				TimerLaser = acquisition_data.time + TIME_LASER_ON; /* Set time for laser on */
 			}
 		}
 		
@@ -121,8 +121,8 @@ void main(void)
 				
 				
 				/* SODS commands */
-				camera_order=START_ACQUISITION; /* Camera start acquisition */
-				TimerAcquisition=acquisition_data.time+OFF_ACQUISITION; /* Set time for stop acquisition */
+				camera_order = START_ACQUISITION; /* Camera start acquisition */
+				TimerAcquisition = acquisition_data.time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
 			}
 		}
 		
@@ -141,7 +141,7 @@ void main(void)
 				SODS_LED=0;
 				
 				/* SOE commands */
-				TimerHeater=acquisition_data.time+OFF_HEATER; /* Set time for heater off */
+				TimerHeater = acquisition_data.time + TIME_HEATER_OFF; /* Set time for heater off */
 				
 			}
 			
@@ -249,7 +249,7 @@ void interrupt isr(void)
 			TimerDebounce = 0;
 		}
 
-		if(TimerDebounce >= DEBOUNCE) 
+		if(TimerDebounce >= TIME_DEBOUNCE)
 		{
 			DEBOUNCEflag = 1;
 			TimerDebounce = 0;
