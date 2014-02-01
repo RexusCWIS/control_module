@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include <htc.h>
-#define _LEGACY_HEADERS 
+#define _LEGACY_HEADERS
 #define XTAL_FREQ 20MHZ
 
 #include "config/pic18f2520_config.h"
@@ -21,6 +21,11 @@ static uint8_t dummy = 0;
 /* Control loop variables */
 int heater_power = 0; 
 
+/* UART variables */
+
+/** @brief Downlink data frame. */
+static serial_frame_s dl_data;
+
 /* I2C variables */
 
 /** @brief I2C ISR index increment variable. */
@@ -32,13 +37,11 @@ static uint8_t i2c_rx_frame[I2C_RX_FRAME_SIZE];
 
 /** @brief Order sent to the camera module.  */
 static i2c_order_e camera_order = STOP_ACQUISITION;
-/** @brief I2C frame, holding the data acquired by sensors. */
-static i2c_frame_s acquisition_data;
 
 /** @brief Array of I2C device registers writeable by the I2C bus master. */
 static uint8_t* i2c_rx_registers[1] = {i2c_rx_frame};
 /** @brief Array of I2C device registers readable by the I2C bus master. */
-static uint8_t* i2c_tx_registers[2] = {(uint8_t *) &camera_order, (uint8_t *) &acquisition_data};
+static uint8_t* i2c_tx_registers[2] = {(uint8_t *) &camera_order, (uint8_t *) &dl_data.acquired_data};
 /** @brief Size of the readable device registers arrays. */
 static uint8_t i2c_tx_reg_sizes[2]  = {sizeof(i2c_order_e), sizeof(i2c_frame_s)};
 
@@ -75,26 +78,26 @@ void main(void) {
             ADCON0 = SENSOR0;
             GO = 1;
             while (GO)
-                acquisition_data.temperatures[0].data = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+                dl_data.acquired_data.temperatures[0].data = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
 
             /* Measure heater temperature */
             ADCON0 = SENSOR1;
             GO = 1;
             while (GO)
-                acquisition_data.temperatures[1].data = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+                dl_data.acquired_data.temperatures[1].data = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
         }
 
         /* LO signal */
         if ((LO) && (!LOenable)) {
             DEBOUNCEstate = 1;
             if ((LO) && (!LOenable) && (DEBOUNCEflag)) {
-                LOstate = 1;
+                LOstate  = 1;
                 LOenable = 1;
                 LO_LED = 1;
                 DEBOUNCEflag = 0;
 
                 /* LO commands */
-                TimerLaser = acquisition_data.time + TIME_LASER_ON; /* Set time for laser on */
+                TimerLaser = dl_data.acquired_data.time + TIME_LASER_ON; /* Set time for laser on */
             }
         }
 
@@ -102,18 +105,18 @@ void main(void) {
         if ((SODS) && (LOenable) && (!SODSenable)) {
             DEBOUNCEstate = 1;
             if ((SODS) && (LOenable) && (!SODSenable) && (DEBOUNCEflag)) {
-                SODSstate = 1;
+                SODSstate  = 1;
                 SODSenable = 1;
-                SODS_LED = 1;
+                SODS_LED   = 1;
                 DEBOUNCEflag = 0;
 
                 LOstate = 0;
-                LO_LED = 0;
+                LO_LED  = 0;
 
 
                 /* SODS commands */
                 camera_order = START_ACQUISITION; /* Camera start acquisition */
-                TimerAcquisition = acquisition_data.time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
+                TimerAcquisition = dl_data.acquired_data.time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
             }
         }
 
@@ -130,15 +133,15 @@ void main(void) {
                 SODS_LED = 0;
 
                 /* SOE commands */
-                TimerHeater = acquisition_data.time + TIME_HEATER_OFF; /* Set time for heater off */
+                TimerHeater = dl_data.acquired_data.time + TIME_HEATER_OFF; /* Set time for heater off */
 
             }
 
             if (SOEstate) {
                 /* Heater control loop */
-                if (acquisition_data.time % RFH_HEATER == 0) {
+                if (dl_data.acquired_data.time % RFH_HEATER == 0) {
                     /* Compute the error between the setpoint and the actual temperature */
-                    heater_power = TEMPERATURE_CONTROL_SETPOINT - (int16_t) acquisition_data.temperatures[0].data;
+                    heater_power = TEMPERATURE_CONTROL_SETPOINT - (int16_t) dl_data.acquired_data.temperatures[0].data;
                     /* Multiply it by the proportional gain */
                     heater_power *= TEMPERATURE_CONTROL_PGAIN;
 
@@ -163,25 +166,25 @@ void interrupt isr(void)
         TMR0H = T0_RELOAD_HIGH;
         TMR0L = T0_RELOAD_LOW;
 
-        acquisition_data.time++; /* Global time */
+        dl_data.acquired_data.time++; /* Global time */
 
         /* Timer for laser on */
-        if (acquisition_data.time == TimerLaser) {
+        if (dl_data.acquired_data.time == TimerLaser) {
             LASER = 1; /* Laser power on */
         }
 
         /* Timer for stop the camera acquisition */
-        if (acquisition_data.time == TimerAcquisition) {
+        if (dl_data.acquired_data.time == TimerAcquisition) {
             camera_order = STOP_ACQUISITION;
         }
 
         /* Timer for heater off */
-        if (acquisition_data.time == TimerHeater) {
+        if (dl_data.acquired_data.time == TimerHeater) {
             HEATER = 0;
         }
 
         /* ADC conversion rate */
-        if ((acquisition_data.time % RFH_ADC) == 0) {
+        if ((dl_data.acquired_data.time % RFH_ADC) == 0) {
             adc_conv_flag = 1; /* Starts adc conversion */
         }
 
@@ -198,6 +201,12 @@ void interrupt isr(void)
             DEBOUNCEflag = 1;
             TimerDebounce = 0;
         }
+    }
+
+    /* UART transmission interrupt */
+    if (PIR1bits.TXIF) {
+
+        PIR1bits.TXIF = 0; 
     }
 
     /* I2C interrupt */
