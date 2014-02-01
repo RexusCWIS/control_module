@@ -1,10 +1,10 @@
 /**
- * @file i2c_frames.h
- * @brief Defines the first byte of data frames sent over I2C. 
+ * @file types.h
+ * @brief Definition of types and structures used in the application.
  */
 
-#ifndef DEF_I2C_FRAMES_H
-#define DEF_I2C_FRAMES_H
+#ifndef DEF_TYPES_H
+#define DEF_TYPES_H
 
 #include <stdint.h>
 
@@ -48,5 +48,5 @@ typedef struct {
     uint8_t crc[2];
 } serial_frame_s; 
 
-#endif  /* DEF_I2C_FRAMES_H */
+#endif  /* DEF_TYPES_H */
 

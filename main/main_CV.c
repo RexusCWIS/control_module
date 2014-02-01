@@ -15,7 +15,7 @@
 
 #include "drivers/i2c_slave.h"
 #include "libs/crc.h"
-#include "i2c_frames.h"
+#include "types.h"
 
 uint32_t system_time;
 
