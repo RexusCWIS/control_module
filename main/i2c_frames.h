@@ -41,8 +41,11 @@ typedef struct {
 } i2c_camera_data_s;
 
 typedef struct {
+    unsigned char sync[2];
     i2c_frame_s acquired_data;
     i2c_camera_data_s camera_data;
+    uint8_t checksum[2];
+    uint8_t crc[2];
 } serial_frame_s; 
 
 #endif  /* DEF_I2C_FRAMES_H */

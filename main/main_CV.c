@@ -9,22 +9,32 @@
 #define _LEGACY_HEADERS
 #define XTAL_FREQ 20MHZ
 
+
 #include "config/pic18f2520_config.h"
 #include "config/board_config.h"
+
 #include "drivers/i2c_slave.h"
+#include "libs/crc.h"
 #include "i2c_frames.h"
 
-
-/** @brief Dummy 8-bit variable, used to empty serial buffers. */
-static uint8_t dummy = 0;
+uint32_t system_time;
 
 /* Control loop variables */
 int heater_power = 0; 
+
+/** @brief Dummy 8-bit variable, used to empty serial buffers. */
+static uint8_t dummy = 0;
 
 /* UART variables */
 
 /** @brief Downlink data frame. */
 static serial_frame_s dl_data;
+/** @brief Serial line circular buffer. */
+static uint8_t serial_tx_buf[16*sizeof(serial_frame_s)];
+/** @brief Serial TX ISR increment variable. */
+static uint16_t serial_tx_buf_head = 0;
+static uint16_t serial_tx_buf_tail = 0;
+static uint8_t  serial_tx_is_idle  = 1;
 
 /* I2C variables */
 
@@ -32,16 +42,17 @@ static serial_frame_s dl_data;
 static uint16_t i2c_index  = 0;
 /** @brief Holds the current device register accessed by the I2C bus master. */
 static uint8_t i2c_dev_reg = 0;
-/** @brief Array holding the data received on the I2C bus. */
-static uint8_t i2c_rx_frame[I2C_RX_FRAME_SIZE];
+
 
 /** @brief Order sent to the camera module.  */
 static i2c_order_e camera_order = STOP_ACQUISITION;
 
 /** @brief Array of I2C device registers writeable by the I2C bus master. */
-static uint8_t* i2c_rx_registers[1] = {i2c_rx_frame};
+static uint8_t* i2c_rx_registers[1] = {(uint8_t *) &dl_data.camera_data};
 /** @brief Array of I2C device registers readable by the I2C bus master. */
 static uint8_t* i2c_tx_registers[2] = {(uint8_t *) &camera_order, (uint8_t *) &dl_data.acquired_data};
+/** @brief Size of the writable device registers arrays. */
+static uint8_t i2c_rx_reg_sizes[1]  = {sizeof(i2c_camera_data_s)};
 /** @brief Size of the readable device registers arrays. */
 static uint8_t i2c_tx_reg_sizes[2]  = {sizeof(i2c_order_e), sizeof(i2c_frame_s)};
 
@@ -59,9 +70,12 @@ static uint16_t LOstate = 0, SODSstate = 0, SOEstate = 0, DEBOUNCEstate = 0,
 static uint16_t TimerLaser = 0, TimerHeater = 0, TimerDebounce = 0;
 static uint32_t TimerAcquisition = 0;
 
+void uart_send_data(uint8_t data[], uint8_t size);
+
 void main(void) {
 
     uint16_t LOenable = 0, SODSenable = 0, SOEenable = 0;
+    uint16_t crc16 = 0;
 
     board_config(); /* Register Init */
     i2c_slave_init(I2C_ADDRESS); /* I2C Init */
@@ -74,6 +88,9 @@ void main(void) {
             
             adc_conv_flag = 0; /* reset conversion flag */
 
+            /* Get system time */
+            dl_data.acquired_data.time = system_time;
+
             /* Measure cell temperature */
             ADCON0 = SENSOR0;
             GO = 1;
@@ -85,6 +102,10 @@ void main(void) {
             GO = 1;
             while (GO)
                 dl_data.acquired_data.temperatures[1].data = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+
+            crc16 = crc((uint8_t *) &dl_data, sizeof(serial_frame_s));
+            dl_data.crc[0] = (uint8_t) (crc16 >> 8u);
+            dl_data.crc[1] = (uint8_t) (crc16 & 0xFFu);
         }
 
         /* LO signal */
@@ -97,7 +118,7 @@ void main(void) {
                 DEBOUNCEflag = 0;
 
                 /* LO commands */
-                TimerLaser = dl_data.acquired_data.time + TIME_LASER_ON; /* Set time for laser on */
+                TimerLaser = system_time + TIME_LASER_ON; /* Set time for laser on */
             }
         }
 
@@ -116,7 +137,7 @@ void main(void) {
 
                 /* SODS commands */
                 camera_order = START_ACQUISITION; /* Camera start acquisition */
-                TimerAcquisition = dl_data.acquired_data.time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
+                TimerAcquisition = system_time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
             }
         }
 
@@ -133,13 +154,13 @@ void main(void) {
                 SODS_LED = 0;
 
                 /* SOE commands */
-                TimerHeater = dl_data.acquired_data.time + TIME_HEATER_OFF; /* Set time for heater off */
+                TimerHeater = system_time + TIME_HEATER_OFF; /* Set time for heater off */
 
             }
 
             if (SOEstate) {
                 /* Heater control loop */
-                if (dl_data.acquired_data.time % RFH_HEATER == 0) {
+                if (system_time % RFH_HEATER == 0) {
                     /* Compute the error between the setpoint and the actual temperature */
                     heater_power = TEMPERATURE_CONTROL_SETPOINT - (int16_t) dl_data.acquired_data.temperatures[0].data;
                     /* Multiply it by the proportional gain */
@@ -166,25 +187,25 @@ void interrupt isr(void)
         TMR0H = T0_RELOAD_HIGH;
         TMR0L = T0_RELOAD_LOW;
 
-        dl_data.acquired_data.time++; /* Global time */
+        system_time++; /* Global time */
 
         /* Timer for laser on */
-        if (dl_data.acquired_data.time == TimerLaser) {
+        if (system_time == TimerLaser) {
             LASER = 1; /* Laser power on */
         }
 
         /* Timer for stop the camera acquisition */
-        if (dl_data.acquired_data.time == TimerAcquisition) {
+        if (system_time == TimerAcquisition) {
             camera_order = STOP_ACQUISITION;
         }
 
         /* Timer for heater off */
-        if (dl_data.acquired_data.time == TimerHeater) {
+        if (system_time == TimerHeater) {
             HEATER = 0;
         }
 
         /* ADC conversion rate */
-        if ((dl_data.acquired_data.time % RFH_ADC) == 0) {
+        if ((system_time % RFH_ADC) == 0) {
             adc_conv_flag = 1; /* Starts adc conversion */
         }
 
@@ -201,12 +222,6 @@ void interrupt isr(void)
             DEBOUNCEflag = 1;
             TimerDebounce = 0;
         }
-    }
-
-    /* UART transmission interrupt */
-    if (PIR1bits.TXIF) {
-
-        PIR1bits.TXIF = 0; 
     }
 
     /* I2C interrupt */
@@ -284,5 +299,54 @@ void interrupt isr(void)
         BCLIF = 0;              /* Clear bus collision flag */
         SSPCON1bits.CKP = 1;    /* Release I2C clock */
         SSPIF = 0;              /* Clear I2C interrupt flag */
+    }
+
+    /* UART transmission interrupt */
+    if (PIR1bits.TXIF) {
+
+        if (serial_tx_buf_head != serial_tx_buf_tail) {
+
+            TXREG = serial_tx_buf[serial_tx_buf_head];
+
+            serial_tx_buf_head++;
+            if (serial_tx_buf_head == sizeof(serial_tx_buf)) {
+                serial_tx_buf_head = 0u;
+            }
+        }
+
+        else {
+            serial_tx_is_idle = 1;
+        }
+
+        PIR1bits.TXIF = 0;
+    }
+}
+
+/** @todo Implement overflow control */
+void uart_send_data(uint8_t data[], uint8_t size) {
+
+    uint16_t index = 0u;
+    uint8_t idle = (serial_tx_buf_tail == serial_tx_buf_head); 
+
+    while(index < size) {
+        serial_tx_buf[serial_tx_buf_tail] = data[index];
+        
+        index++;
+        
+        serial_tx_buf_tail++;
+        if(serial_tx_buf_tail == sizeof(serial_tx_buf)) {
+            serial_tx_buf_tail = 0u;
+        }
+    }
+
+    /* If the module was idle, start data transfer. */
+    if(serial_tx_is_idle = 1) {
+        TXREG = serial_tx_buf[serial_tx_buf_head];
+        
+        serial_tx_buf_head++;
+        if(serial_tx_buf_head == sizeof(serial_tx_buf)) {
+            serial_tx_buf_head = 0; 
+        }
+        serial_tx_is_idle = 0;
     }
 }
