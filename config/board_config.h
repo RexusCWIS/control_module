@@ -46,9 +46,13 @@
 #define TIME_DEBOUNCE    50     //Timer for debounce system (default 50)
 #define TIME_ACQUISITION_OFF    140000  //Timer for stop the camera acquisition (default 140000)
 
-//FUNCTION PROTOTYPES//
+
+/**
+ * @brief Initializes the microcontroller according to the experiment setup.
+ * @details Initializes peripherals and I/Os according to the experiment design:
+ *          oscillator frequency, required timer period or baudrates...
+ */
 void board_config(void);
-void sendtemp(int);
 
 #endif  /* DEF_BOARD_CONFIG_H */
 
