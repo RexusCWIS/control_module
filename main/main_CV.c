@@ -9,13 +9,13 @@
 #define _LEGACY_HEADERS
 #define XTAL_FREQ 20MHZ
 
+#include "drivers/types.h"
 
 #include "config/pic18f2520_config.h"
 #include "config/board_config.h"
 
 #include "drivers/i2c_slave.h"
 #include "libs/crc.h"
-#include "types.h"
 
 uint32_t system_time;
 
