@@ -42,21 +42,12 @@
 
 void board_config(void) {
 
-    PORTA = 0;
+    LATA = 0;
     TRISA = 0b00000111; // Set RA0, RA1 and RA2 as input (A/D)
-    PORTB = 0;
+    LATB = 0;
     TRISB = 0b00001110; // Set RB1, RB2 and RB3 as input (RXSM signals)
-    PORTC = 0;
+    LATC = 0;
     TRISC = 0b11011000; // Set RC1 and RC2 as output (PWM module), RC3 and RC4 as transceiver I2C, RC6 and RC7 as transceiver COM port
-
-    // Interrupt setup //
-    IPEN = 0; // Interrupt no properties
-    GIE = 1; // Global interrupts active
-    PEIE = 1; // Peripheral interrupt
-    TMR0IE = 1; // Timer Interrupt
-    RCIE = 1; //COM receiving interrupts
-    // TXIE=1; //COM transmitting interrupt (Not more used)
-
 
     // Setup TMR0 //
     T0CON = 0b10001100; //Set TMR0 at 16bit, internal clock tick on rising edge, prescaler at 1:1
@@ -84,7 +75,7 @@ void board_config(void) {
     TXSTA = 0x24u;
 
     /* Enable Tx interrupt */
-    PIE1bits.TXIE = 1;
+    PIR1bits.TXIF = 0;
 
     // Setup A/D module //
     ADCON1 = 0b00011010; // Set V3 as +REF (1V), set analog input channels ( last 0b00011100)
@@ -95,5 +86,14 @@ void board_config(void) {
     PR2 = 0b11111111; //Set PWM oscillator frequency at 39,06kHz
     CCPR1L = 0; //Set dutycicle to 0%
     T2CON = 0b100; //Set TMR2 prescaler to 1
+
+    // Interrupt setup //
+    IPEN = 0; // Interrupt no properties
+    PEIE = 1; // Peripheral interrupt
+    TMR0IE = 1; // Timer Interrupt
+    RCIE = 1; //COM receiving interrupts
+
+    /* Enable interrupts */
+    ei();
 }
 

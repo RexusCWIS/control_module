@@ -8,20 +8,23 @@
 
 #include <htc.h>
 
-// General macros //
-#define SENSOR0 0b00000001 // Analog input AN0 
-#define SENSOR1 0b00000101 // Analog input AN1
-#define SENSOR2 0b00001001 // Analog input AN2
+/* I/O macros */
+#define ADC_CONVERSION  ADCON0bits.GO
+
+#define TEMPERATURE_SENSOR1 0x1u    /* Analog input AN0 */
+#define TEMPERATURE_SENSOR2 0x5u    /* Analog input AN1 */
+#define TEMPERATURE_SENSOR3 0x9u    /* Analog input AN2 */
+#define PRESSURE_SENSOR     0x11u   /* Analog input AN4 */
 
 #define LO       PORTBbits.RB3  // Lift-Off
 #define SODS     PORTBbits.RB1  // Start Of Data Storage
 #define SOE      PORTBbits.RB2  // Start Of Experiment
 
-#define LO_LED   PORTBbits.RB5  // Lift-Off LED
-#define SODS_LED PORTBbits.RB6  // Start Of Data Storage LED
-#define SOE_LED  PORTBbits.RB7  // Start Of Experiment LED
+#define LO_LED   LATCbits.LATC0  // Lift-Off LED
+#define SODS_LED LATCbits.LATC1  // Start Of Data Storage LED
+#define SOE_LED  LATCbits.LATC5  // Start Of Experiment LED
 
-#define LASER   PORTBbits.RB4     // Laser command output
+#define LASER_CONTROL   LATBbits.LATB4   /* Laser command output */
 #define HEATER  CCPR1L // Heater command output (PWM)
 
 /** @brief Temperature control setpoint. */
@@ -38,7 +41,7 @@
 #define I2C_TX_FRAME_SIZE   32u
 #define I2C_ADDRESS 0x22u
 
-// 1 unit = 1ms //
+/* 1 unit = 1ms */
 #define TIME_LASER_ON    5000   // Timer for Laser Power On after LO (default 5000)
 #define TIME_HEATER_OFF  20000  //Timer for Heater Power Off after predefined time (default 15000)
 #define RFH_HEATER  5           //Timer for refresh heater power (default X)
