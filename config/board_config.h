@@ -16,9 +16,9 @@
 #define TEMPERATURE_SENSOR3 0x9u    /* Analog input AN2 */
 #define PRESSURE_SENSOR     0x11u   /* Analog input AN4 */
 
-#define LO       PORTBbits.RB3  // Lift-Off
-#define SODS     PORTBbits.RB1  // Start Of Data Storage
-#define SOE      PORTBbits.RB2  // Start Of Experiment
+#define RXSM_LO       PORTBbits.RB3  // Lift-Off
+#define RXSM_SODS     PORTBbits.RB1  // Start Of Data Storage
+#define RXSM_SOE      PORTBbits.RB2  // Start Of Experiment
 
 #define LO_LED   LATCbits.LATC0  // Lift-Off LED
 #define SODS_LED LATCbits.LATC1  // Start Of Data Storage LED

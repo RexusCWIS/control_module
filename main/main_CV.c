@@ -153,9 +153,9 @@ void main(void) {
         }
 
         /* LO signal */
-        if ((LO) && (!LOenable)) {
+        if ((RXSM_LO) && (!LOenable)) {
             DEBOUNCEstate = 1;
-            if ((LO) && (!LOenable) && (DEBOUNCEflag)) {
+            if ((RXSM_LO) && (!LOenable) && (DEBOUNCEflag)) {
                 LOstate  = 1;
                 LOenable = 1;
                 LO_LED = 1;
@@ -167,9 +167,9 @@ void main(void) {
         }
 
         /* SODS signal */
-        if ((SODS) && (LOenable) && (!SODSenable)) {
+        if ((RXSM_SODS) && (LOenable) && (!SODSenable)) {
             DEBOUNCEstate = 1;
-            if ((SODS) && (LOenable) && (!SODSenable) && (DEBOUNCEflag)) {
+            if ((RXSM_SODS) && (LOenable) && (!SODSenable) && (DEBOUNCEflag)) {
                 SODSstate  = 1;
                 SODSenable = 1;
                 SODS_LED   = 1;
@@ -181,14 +181,14 @@ void main(void) {
 
                 /* SODS commands */
                 camera_order = START_ACQUISITION; /* Camera start acquisition */
-                TimerAcquisition = system_time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
+                acquisition_timer = system_time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
             }
         }
 
         /* SOE signal */
-        if ((SOE) && (SODSenable) && (LOenable) && (!SOEenable)) {
+        if ((RXSM_SOE) && (SODSenable) && (LOenable) && (!SOEenable)) {
             DEBOUNCEstate = 1;
-            if ((SOE) && (SODSenable) && (LOenable) && (!SOEenable) && (DEBOUNCEflag)) {
+            if ((RXSM_SOE) && (SODSenable) && (LOenable) && (!SOEenable) && (DEBOUNCEflag)) {
                 SOEstate = 1;
                 SOEenable = 1;
                 SOE_LED = 1;
@@ -226,7 +226,7 @@ void interrupt isr(void)
         }
 
         /* Timer for stop the camera acquisition */
-        if (system_time == TimerAcquisition) {
+        if (system_time == acquisition_timer) {
             camera_order = STOP_ACQUISITION;
         }
 
