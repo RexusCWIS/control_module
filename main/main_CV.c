@@ -70,8 +70,8 @@ static void timer_init(void);
 
 static uint16_t LOstate = 0, SODSstate = 0, SOEstate = 0, DEBOUNCEstate = 0,
                 DEBOUNCEflag = 0, adc_conv_flag = 0;
-static uint16_t TimerLaser = 0, TimerHeater = 0, TimerDebounce = 0;
-static uint32_t TimerAcquisition = 0;
+static uint16_t laser_timer = 0, heater_timer = 0, debounce_timer = 0;
+static uint32_t acquisition_timer = 0;
 
 void uart_send_data(uint8_t data[], uint8_t size);
 
@@ -136,8 +136,9 @@ void main(void) {
             /* Frame transmission */
             uart_send_data(&dl_data, sizeof(serial_frame_s));
 
+            /* Heater control loop */
             if (SOEstate) {
-                /* Heater control loop */
+
                 if (system_time % RFH_HEATER == 0) {
                     /* Compute the error between the setpoint and the actual temperature */
                     heater_power = TEMPERATURE_CONTROL_SETPOINT - (int16_t) dl_data.acquired_data.temperatures[0];
@@ -161,7 +162,7 @@ void main(void) {
                 DEBOUNCEflag = 0;
 
                 /* LO commands */
-                TimerLaser = system_time + TIME_LASER_ON; /* Set time for laser on */
+                laser_timer = system_time + TIME_LASER_ON; /* Set time for laser on */
             }
         }
 
@@ -197,7 +198,7 @@ void main(void) {
                 SODS_LED = 0;
 
                 /* SOE commands */
-                TimerHeater = system_time + TIME_HEATER_OFF; /* Set time for heater off */
+                heater_timer = system_time + TIME_HEATER_OFF; /* Set time for heater off */
 
             }
         }
@@ -219,7 +220,7 @@ void interrupt isr(void)
         system_time++; /* Global time */
 
         /* Timer for laser on */
-        if (system_time == TimerLaser) {
+        if (system_time == laser_timer) {
             dl_data.acquired_data.status[0] |= STATUS_LASER_ON; 
             LASER_CONTROL = 1; /* Laser power on */
         }
@@ -230,7 +231,7 @@ void interrupt isr(void)
         }
 
         /* Timer for heater off */
-        if (system_time == TimerHeater) {
+        if (system_time == heater_timer) {
             HEATER = 0;
         }
 
@@ -242,16 +243,16 @@ void interrupt isr(void)
 
         /* Timer for debounce system */
         if (DEBOUNCEstate) {
-            TimerDebounce++;
+            debounce_timer++;
             DEBOUNCEstate = 0;
         }
         else {
-            TimerDebounce = 0;
+            debounce_timer = 0;
         }
 
-        if (TimerDebounce >= TIME_DEBOUNCE) {
+        if (debounce_timer >= TIME_DEBOUNCE) {
             DEBOUNCEflag = 1;
-            TimerDebounce = 0;
+            debounce_timer = 0;
         }
     }
 
