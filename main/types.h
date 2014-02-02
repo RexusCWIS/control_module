@@ -8,18 +8,14 @@
 
 #include <stdint.h>
 
-typedef struct {
-    uint16_t data;
-}pressure_data_s;
-
-typedef struct {
-    uint16_t data;
-}temperature_data_s; 
-
 typedef enum {
     START_ACQUISITION = 'G', 
     STOP_ACQUISITION  = 'S'
 } i2c_order_e; 
+
+#define STATUS_POWER_ON     (1 << 0)
+#define STATUS_LASER_ON     (1 << 1)
+#define STATUS_CAMERA_ON    (1 << 2)
 
 /**
  * @brief I2C data frame.
@@ -29,8 +25,8 @@ typedef enum {
  */
 typedef struct {
     uint32_t time;                      /**< @brief Time at which data acquisition occured. */
-    temperature_data_s temperatures[3]; /**< @brief Temperature sensors data. */
-    pressure_data_s pressure;           /**< @brief Pressure sensor data. */
+    uint16_t temperatures[3];           /**< @brief Temperature sensors data. */
+    uint16_t pressure;                  /**< @brief Pressure sensor data. */
     uint8_t status[2];                  /**< @brief Control module status. */
 } i2c_frame_s;
 
@@ -41,7 +37,7 @@ typedef struct {
 } i2c_camera_data_s;
 
 typedef struct {
-    unsigned char sync[2];
+    uint8_t sync[2];
     i2c_frame_s acquired_data;
     i2c_camera_data_s camera_data;
     uint8_t checksum[2];

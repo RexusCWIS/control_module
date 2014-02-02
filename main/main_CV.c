@@ -59,6 +59,9 @@ static uint8_t i2c_tx_reg_sizes[2]  = {sizeof(i2c_order_e), sizeof(i2c_frame_s)}
 /** @brief I2C ISR state machine. */
 static i2c_state_machine_e i2c_state;
 
+/** @brief Message displayed at boot. */
+static unsigned char boot_msg[68]  = "\n\rThis is the CWIS control module. Starting functional tests...\n\r\n\r\0";
+
 /**
  * @brief Initializes timer parameters.
  * @details Initializes the TMR0 module to get a 1 millisecond tick. 
@@ -77,8 +80,14 @@ void main(void) {
     uint16_t LOenable = 0, SODSenable = 0, SOEenable = 0;
     uint16_t crc16 = 0;
 
+    dl_data.sync[0] = 'U';
+    dl_data.sync[1] = 'U'; 
+    dl_data.acquired_data.status[0] |= STATUS_POWER_ON;
+
     board_config(); /* Register Init */
     i2c_slave_init(I2C_ADDRESS); /* I2C Init */
+
+    uart_send_data(boot_msg, sizeof(boot_msg)); 
 
 
     while (1) {
@@ -92,20 +101,54 @@ void main(void) {
             dl_data.acquired_data.time = system_time;
 
             /* Measure cell temperature */
-            ADCON0 = SENSOR0;
-            GO = 1;
-            while (GO)
-                dl_data.acquired_data.temperatures[0].data = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+            ADCON0 = TEMPERATURE_SENSOR1;
+            ADC_CONVERSION = 1;
+            while (ADC_CONVERSION)
+                ;
+            dl_data.acquired_data.temperatures[0] = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
 
             /* Measure heater temperature */
-            ADCON0 = SENSOR1;
-            GO = 1;
-            while (GO)
-                dl_data.acquired_data.temperatures[1].data = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+            ADCON0 = TEMPERATURE_SENSOR2;
+            ADC_CONVERSION = 1;
+            while (ADC_CONVERSION)
+                ;
+            dl_data.acquired_data.temperatures[1] = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
 
+            /* Measure heater temperature */
+            ADCON0 = TEMPERATURE_SENSOR3;
+            ADC_CONVERSION = 1;
+            while (ADC_CONVERSION)
+                ;
+            dl_data.acquired_data.temperatures[2] = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+
+            /* Measure heater temperature */
+            ADCON0 = PRESSURE_SENSOR;
+            ADC_CONVERSION = 1;
+            while (ADC_CONVERSION)
+                ;
+            dl_data.acquired_data.pressure = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+
+            /* CRC computation */
             crc16 = crc((uint8_t *) &dl_data, sizeof(serial_frame_s));
             dl_data.crc[0] = (uint8_t) (crc16 >> 8u);
             dl_data.crc[1] = (uint8_t) (crc16 & 0xFFu);
+
+            /* Frame transmission */
+            uart_send_data(&dl_data, sizeof(serial_frame_s));
+
+            if (SOEstate) {
+                /* Heater control loop */
+                if (system_time % RFH_HEATER == 0) {
+                    /* Compute the error between the setpoint and the actual temperature */
+                    heater_power = TEMPERATURE_CONTROL_SETPOINT - (int16_t) dl_data.acquired_data.temperatures[0];
+                    /* Multiply it by the proportional gain */
+                    heater_power *= TEMPERATURE_CONTROL_PGAIN;
+
+                    /* Apply system limits (no cooling, 8-bit duty cycle) */
+                    heater_power = (heater_power < 0) ? 0 : heater_power;
+                    HEATER = (uint8_t) (heater_power & 0xFFu);
+                }
+            }
         }
 
         /* LO signal */
@@ -157,20 +200,6 @@ void main(void) {
                 TimerHeater = system_time + TIME_HEATER_OFF; /* Set time for heater off */
 
             }
-
-            if (SOEstate) {
-                /* Heater control loop */
-                if (system_time % RFH_HEATER == 0) {
-                    /* Compute the error between the setpoint and the actual temperature */
-                    heater_power = TEMPERATURE_CONTROL_SETPOINT - (int16_t) dl_data.acquired_data.temperatures[0].data;
-                    /* Multiply it by the proportional gain */
-                    heater_power *= TEMPERATURE_CONTROL_PGAIN;
-
-                    /* Apply system limits (no cooling, 8-bit duty cycle) */
-                    heater_power = (heater_power < 0) ? 0 : heater_power;
-                    HEATER = (uint8_t) (heater_power & 0xFFu);
-                }
-            }
         }
     }
 }
@@ -191,7 +220,8 @@ void interrupt isr(void)
 
         /* Timer for laser on */
         if (system_time == TimerLaser) {
-            LASER = 1; /* Laser power on */
+            dl_data.acquired_data.status[0] |= STATUS_LASER_ON; 
+            LASER_CONTROL = 1; /* Laser power on */
         }
 
         /* Timer for stop the camera acquisition */
@@ -205,6 +235,7 @@ void interrupt isr(void)
         }
 
         /* ADC conversion rate */
+        /** @todo Replace the modulo operation for performance */
         if ((system_time % RFH_ADC) == 0) {
             adc_conv_flag = 1; /* Starts adc conversion */
         }
@@ -316,6 +347,7 @@ void interrupt isr(void)
 
         else {
             serial_tx_is_idle = 1;
+            PIE1bits.TXIE = 0;
         }
 
         PIR1bits.TXIF = 0;
@@ -349,4 +381,6 @@ void uart_send_data(uint8_t data[], uint8_t size) {
         }
         serial_tx_is_idle = 0;
     }
+    
+    PIE1bits.TXIE = 1;
 }
