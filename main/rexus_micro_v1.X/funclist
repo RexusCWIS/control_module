@@ -1,12 +1,12 @@
-_main: CODE, 28 0 880
-__initialization: CODE, 2368 0 96
-_board_config: CODE, 2678 0 92
-_isr: CODE, 8 0 1744
-_i2c_slave_init: CODE, 2838 0 16
-i2___llmod: CODE, 2474 0 106
+_main: CODE, 28 0 926
+__initialization: CODE, 2426 0 96
+_board_config: CODE, 2736 0 92
+_isr: CODE, 8 0 1802
+_i2c_slave_init: CODE, 2896 0 16
+i2___llmod: CODE, 2532 0 106
 _crc_table: MEDIUMCONST, 32254 0 512
-___llmod: CODE, 1974 0 214
-_crc: CODE, 2188 0 180
-___wmul: CODE, 2580 0 98
-_uart_send_data: CODE, 1752 0 222
-Total: 4160
+___llmod: CODE, 2032 0 214
+_crc: CODE, 2246 0 180
+___wmul: CODE, 2638 0 98
+_uart_send_data: CODE, 1810 0 222
+Total: 4264

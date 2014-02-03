@@ -70,8 +70,8 @@ static void timer_init(void);
 
 static uint16_t LOstate = 0, SODSstate = 0, SOEstate = 0, DEBOUNCEstate = 0,
                 DEBOUNCEflag = 0, adc_conv_flag = 0;
-static uint16_t laser_timer = 0, heater_timer = 0, debounce_timer = 0;
-static uint32_t acquisition_timer = 0;
+static uint32_t laser_timer = 0, heater_timer = 0, debounce_timer = 0,
+                acquisition_timer = 0;
 
 void uart_send_data(uint8_t data[], uint8_t size);
 
@@ -129,7 +129,7 @@ void main(void) {
             dl_data.acquired_data.pressure = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
 
             /* CRC computation */
-            crc16 = crc((uint8_t *) &dl_data, sizeof(serial_frame_s));
+            crc16 = crc((uint8_t *) &dl_data, (sizeof(serial_frame_s) - 2u));
             dl_data.crc[0] = (uint8_t) (crc16 >> 8u);
             dl_data.crc[1] = (uint8_t) (crc16 & 0xFFu);
 
@@ -162,6 +162,7 @@ void main(void) {
                 DEBOUNCEflag = 0;
 
                 /* LO commands */
+                dl_data.acquired_data.status[0] |= STATUS_LO;
                 laser_timer = system_time + TIME_LASER_ON; /* Set time for laser on */
             }
         }
@@ -180,6 +181,7 @@ void main(void) {
 
 
                 /* SODS commands */
+                dl_data.acquired_data.status[0] |= STATUS_SODS;
                 camera_order = START_ACQUISITION; /* Camera start acquisition */
                 acquisition_timer = system_time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
             }
@@ -198,6 +200,7 @@ void main(void) {
                 SODS_LED = 0;
 
                 /* SOE commands */
+                dl_data.acquired_data.status[0] |= STATUS_SOE;
                 heater_timer = system_time + TIME_HEATER_OFF; /* Set time for heater off */
 
             }

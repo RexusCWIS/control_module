@@ -16,6 +16,9 @@ typedef enum {
 #define STATUS_POWER_ON     (1 << 0)
 #define STATUS_LASER_ON     (1 << 1)
 #define STATUS_CAMERA_ON    (1 << 2)
+#define STATUS_LO           (1 << 3)
+#define STATUS_SODS         (1 << 4)
+#define STATUS_SOE          (1 << 5)
 
 /**
  * @brief I2C data frame.
