@@ -1,0 +1,5 @@
+# MPLAB files
+build/*
+dist/*
+l.obj
+funclist
