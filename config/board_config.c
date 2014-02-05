@@ -43,7 +43,7 @@
 void board_config(void) {
 
     LATA = 0;
-    TRISA = 0b00000111; // Set RA0, RA1 and RA2 as input (A/D)
+    TRISA = 0b00100111; // Set RA0, RA1, RA2 and RA5 as input (A/D)
     LATB = 0;
     TRISB = 0b00001110; // Set RB1, RB2 and RB3 as input (RXSM signals)
     LATC = 0;

@@ -98,7 +98,9 @@ void main(void) {
             adc_conv_flag = 0; /* reset conversion flag */
 
             /* Get system time */
+            di();
             dl_data.acquired_data.time = system_time;
+            ei();
 
             /* Measure cell temperature */
             ADCON0 = TEMPERATURE_SENSOR1;
@@ -376,7 +378,7 @@ void uart_send_data(uint8_t data[], uint8_t size) {
     }
 
     /* If the module was idle, start data transfer. */
-    if(serial_tx_is_idle = 1) {
+    if(serial_tx_is_idle == 1) {
         TXREG = serial_tx_buf[serial_tx_buf_head];
         
         serial_tx_buf_head++;
