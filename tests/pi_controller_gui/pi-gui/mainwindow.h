@@ -15,6 +15,8 @@ public:
 
 private:
     CentralWidget *m_stepPlot;
+    QMenu *m_fileMenu;
+    QMenu *m_configMenu;
 };
 
 #endif // MAINWINDOW_H
