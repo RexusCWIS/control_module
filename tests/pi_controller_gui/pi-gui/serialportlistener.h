@@ -2,6 +2,7 @@
 #define SERIALPORTLISTENER_H
 
 #include "experiment.h"
+#include "serialportconfig.h"
 
 #include <QVector>
 #include <QThread>
@@ -18,6 +19,9 @@ class SerialPortListener: public QThread {
                            QSerialPort::DataBits dataBits = QSerialPort::Data8,
                            QSerialPort::Parity parity = QSerialPort::NoParity,
                            QSerialPort::StopBits stopBits = QSerialPort::OneStop);
+
+        SerialPortListener(QObject *parent, const SerialPortConfig &config);
+
         virtual ~SerialPortListener();
 
         void start(void);
@@ -43,6 +47,7 @@ class SerialPortListener: public QThread {
         QSerialPort::DataBits m_dataBits;
         QSerialPort::Parity   m_parity;
         QSerialPort::StopBits m_stopBits;
+
         volatile bool m_stop;
 };
 

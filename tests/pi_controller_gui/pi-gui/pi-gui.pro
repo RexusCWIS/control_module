@@ -18,11 +18,14 @@ SOURCES += main.cpp\
     serialportlistener.cpp \
     crc.c \
     crc_table.c \
-    centralwidget.cpp
+    centralwidget.cpp \
+    serialportdialog.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
     serialportlistener.h \
     experiment.h \
     crc.h \
-    centralwidget.h
+    centralwidget.h \
+    serialportdialog.h \
+    serialportconfig.h

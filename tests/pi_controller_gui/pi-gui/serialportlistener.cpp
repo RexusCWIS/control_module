@@ -25,6 +25,18 @@ SerialPortListener::SerialPortListener(QObject *parent, const QString &device,
     m_recordedData = new QVector<ExperimentData_s>(0);
 }
 
+SerialPortListener::SerialPortListener(QObject *parent, const SerialPortConfig &config) : QThread(parent) {
+
+    m_serialPort = config.device;
+    m_baudrate   = config.baudrate;
+    m_dataBits   = config.dataBits;
+    m_parity     = config.parity;
+    m_stopBits   = config.stopBits;
+
+    m_stop   = false;
+    m_recordedData = new QVector<ExperimentData_s>(0);
+}
+
 SerialPortListener::~SerialPortListener() {
 
     stop();
