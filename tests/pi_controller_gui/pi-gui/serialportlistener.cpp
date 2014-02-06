@@ -8,11 +8,18 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include <QByteArray>
 
-/* Required for memcpy */
-#include <cstring>
+SerialPortListener::SerialPortListener(QObject *parent, const QString &device,
+                   QSerialPort::BaudRate baudrate,
+                   QSerialPort::DataBits dataBits,
+                   QSerialPort::Parity parity,
+                   QSerialPort::StopBits stopBits) : QThread(parent) {
 
-SerialPortListener::SerialPortListener(QObject *parent) :
-        QThread(parent) {
+    m_serialPort = device;
+
+    m_baudrate = baudrate;
+    m_dataBits = dataBits;
+    m_parity   = parity;
+    m_stopBits = stopBits;
 
     m_stop   = false;
     m_recordedData = new QVector<ExperimentData_s>(0);
@@ -44,11 +51,10 @@ void SerialPortListener::setSerialPort(const QString &device) {
     start();
 }
 
-/** @todo Fix this */
-void SerialPortListener::setSerialPort(const QSerialPortInfo &port) {
+void SerialPortListener::setBaudrate(QSerialPort::BaudRate baudrate) {
 
-    (void) port;
     stop();
+    m_baudrate = baudrate;
     start();
 }
 
@@ -96,11 +102,10 @@ void SerialPortListener::run() {
 
     serial.open(QIODevice::ReadOnly);
 
-    /* Default parameters: 57600 bps, 8N1 */
-    serial.setBaudRate(QSerialPort::Baud38400);
-    serial.setDataBits(QSerialPort::Data8);
-    serial.setParity(QSerialPort::NoParity);
-    serial.setStopBits(QSerialPort::OneStop);
+    serial.setBaudRate(m_baudrate);
+    serial.setDataBits(m_dataBits);
+    serial.setParity(m_parity);
+    serial.setStopBits(m_stopBits);
 
     while(!m_stop) {
 
