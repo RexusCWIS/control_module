@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_stepPlot = new CentralWidget(this);
     this->setCentralWidget(m_stepPlot);
 
-    m_serialConfigDlg = new SerialPortDialog(this);
+    m_serialConfigDlg = new SerialPortDialog();
 
     this->createActions();
     this->createMenus();
@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-
+    delete m_serialConfigDlg;
 }
 
 void MainWindow::showSerialConfigDlg(void) {

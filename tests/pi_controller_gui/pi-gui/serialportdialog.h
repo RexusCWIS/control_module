@@ -2,7 +2,11 @@
 #define SERIALPORTDIALOG_H
 
 #include <QDialog>
+#include <QLabel>
 #include <QComboBox>
+#include <QPushButton>
+#include <QGridLayout>
+#include <QHBoxLayout>
 #include <QVBoxLayout>
 
 #include "serialportconfig.h"
@@ -25,7 +29,19 @@ private:
     QComboBox *m_paritySelector;
     QComboBox *m_stopBitsSelector;
 
-    QVBoxLayout *m_layout;
+    QLabel *m_deviceLabel;
+    QLabel *m_baudrateLabel;
+    QLabel *m_dataBitsLabel;
+    QLabel *m_parityLabel;
+    QLabel *m_stopBitsLabel;
+
+    QPushButton *m_okButton;
+    QPushButton *m_cancelButton;
+
+    QGridLayout *m_selectorsLayout;
+    QHBoxLayout *m_buttonsLayout;
+    QVBoxLayout *m_mainLayout;
+
 
     SerialPortConfig *m_serialPortConfig;
 };
