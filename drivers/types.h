@@ -8,6 +8,21 @@
 
 #include <stdint.h>
 
+#define LO_DEBOUNCE_REQUEST     (1 << 0)
+#define SODS_DEBOUNCE_REQUEST   (1 << 1)
+#define SOE_DEBOUNCE_REQUEST    (1 << 2)
+#define LO_DEBOUNCED_STATE      (1 << 4)
+#define SODS_DEBOUNCED_STATE    (1 << 5)
+#define SOE_DEBOUNCED_STATE     (1 << 6)
+
+typedef enum {
+    BOOT = 0,
+    LO   = 1,
+    SODS = 2,
+    SOE  = 3,
+    END  = 4
+} experiment_state_e;
+
 typedef enum {
     START_ACQUISITION = 'G', 
     STOP_ACQUISITION  = 'S'

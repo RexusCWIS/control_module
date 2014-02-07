@@ -68,17 +68,20 @@ static unsigned char boot_msg[68]  = "\n\rThis is the CWIS control module. Start
  */
 static void timer_init(void);
 
-static uint16_t LOstate = 0, SODSstate = 0, SOEstate = 0, DEBOUNCEstate = 0,
-                DEBOUNCEflag = 0, adc_conv_flag = 0;
 static uint32_t laser_timer = 0, heater_timer = 0, debounce_timer = 0,
                 acquisition_timer = 0;
+
+static uint8_t  debounce_flags = 0, adc_conv_flag = 0;
+static uint32_t lo_debounce_time = 0, sods_debounce_time = 0,
+                soe_debounce_time = 0;
 
 void uart_send_data(uint8_t data[], uint8_t size);
 
 void main(void) {
 
-    uint16_t LOenable = 0, SODSenable = 0, SOEenable = 0;
     uint16_t crc16 = 0;
+
+    experiment_state_e current_experiment_state = BOOT;
 
     dl_data.sync[0] = 'U';
     dl_data.sync[1] = 'U'; 
@@ -116,14 +119,14 @@ void main(void) {
                 ;
             dl_data.acquired_data.temperatures[1] = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
 
-            /* Measure heater temperature */
+            /* Measure ambient temperature */
             ADCON0 = TEMPERATURE_SENSOR3;
             ADC_CONVERSION = 1;
             while (ADC_CONVERSION)
                 ;
             dl_data.acquired_data.temperatures[2] = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
 
-            /* Measure heater temperature */
+            /* Measure ambient pressure */
             ADCON0 = PRESSURE_SENSOR;
             ADC_CONVERSION = 1;
             while (ADC_CONVERSION)
@@ -139,7 +142,7 @@ void main(void) {
             uart_send_data(&dl_data, sizeof(serial_frame_s));
 
             /* Heater control loop */
-            if (SOEstate) {
+            if (current_experiment_state == SOE) {
 
                 if (system_time % RFH_HEATER == 0) {
                     /* Compute the error between the setpoint and the actual temperature */
@@ -154,58 +157,103 @@ void main(void) {
             }
         }
 
-        /* LO signal */
-        if ((RXSM_LO) && (!LOenable)) {
-            DEBOUNCEstate = 1;
-            if ((RXSM_LO) && (!LOenable) && (DEBOUNCEflag)) {
-                LOstate  = 1;
-                LOenable = 1;
-                LO_LED = 1;
-                DEBOUNCEflag = 0;
+        /* LO signal debounce */
+        if((RXSM_LO && !(debounce_flags & LO_DEBOUNCED_STATE)) ||
+           !(RXSM_LO) && (debounce_flags & LO_DEBOUNCED_STATE)) {
 
-                /* LO commands */
-                dl_data.acquired_data.status[0] |= STATUS_LO;
-                laser_timer = system_time + TIME_LASER_ON; /* Set time for laser on */
+            if(!debounce_flags & LO_DEBOUNCE_REQUEST) {
+
+                lo_debounce_time = system_time;
+                debounce_flags  |= LO_DEBOUNCE_REQUEST;
             }
+
+            if((system_time - lo_debounce_time) >= DEBOUNCE_TIME) {
+                debounce_flags ^= LO_DEBOUNCED_STATE;
+                debounce_flags &= ~LO_DEBOUNCE_REQUEST;
+            }
+        }
+
+        else if(debounce_flags & LO_DEBOUNCE_REQUEST) {
+            debounce_flags &= ~LO_DEBOUNCE_REQUEST;
+        }
+
+
+        /* SODS signal debounce */
+        if((RXSM_SODS && !(debounce_flags & SODS_DEBOUNCED_STATE)) ||
+           !(RXSM_SODS) && (debounce_flags & SODS_DEBOUNCED_STATE)) {
+
+            if(!debounce_flags & SODS_DEBOUNCE_REQUEST) {
+
+                sods_debounce_time = system_time;
+                debounce_flags  |= SODS_DEBOUNCE_REQUEST;
+            }
+
+            if((system_time - sods_debounce_time) >= DEBOUNCE_TIME) {
+                debounce_flags ^= SODS_DEBOUNCED_STATE;
+                debounce_flags &= ~SODS_DEBOUNCE_REQUEST;
+            }
+        }
+
+        else if(debounce_flags & SODS_DEBOUNCE_REQUEST) {
+            debounce_flags &= ~SODS_DEBOUNCE_REQUEST;
+        }
+
+        /* SOE signal debounce */
+        if((RXSM_SOE && !(debounce_flags & SOE_DEBOUNCED_STATE)) ||
+           !(RXSM_SOE) && (debounce_flags & SOE_DEBOUNCED_STATE)) {
+
+            if(!debounce_flags & SOE_DEBOUNCE_REQUEST) {
+
+                soe_debounce_time = system_time;
+                debounce_flags  |= SOE_DEBOUNCE_REQUEST;
+            }
+
+            if((system_time - soe_debounce_time) >= DEBOUNCE_TIME) {
+                debounce_flags ^= SOE_DEBOUNCED_STATE;
+                debounce_flags &= ~SOE_DEBOUNCE_REQUEST;
+            }
+        }
+
+        else if(debounce_flags & SOE_DEBOUNCE_REQUEST) {
+            debounce_flags &= ~SOE_DEBOUNCE_REQUEST;
+        }
+
+
+        /* Actions taken on RXSM signals */
+
+        /* LO signal */
+        if ((debounce_flags & LO_DEBOUNCED_STATE) && (current_experiment_state == BOOT)) {
+
+            /* LO commands */
+            laser_timer = system_time + TIME_LASER_ON; /* Set time for laser on */
+            current_experiment_state = LO;
+            dl_data.acquired_data.status[0] |= STATUS_LO;
+            LO_LED = 1;
         }
 
         /* SODS signal */
-        if ((RXSM_SODS) && (LOenable) && (!SODSenable)) {
-            DEBOUNCEstate = 1;
-            if ((RXSM_SODS) && (LOenable) && (!SODSenable) && (DEBOUNCEflag)) {
-                SODSstate  = 1;
-                SODSenable = 1;
-                SODS_LED   = 1;
-                DEBOUNCEflag = 0;
+        if ((debounce_flags & SODS_DEBOUNCED_STATE) && (current_experiment_state == LO)) {
 
-                LOstate = 0;
-                LO_LED  = 0;
+            /* SODS commands */
+            camera_order = START_ACQUISITION; /* Camera start acquisition */
+            acquisition_timer = system_time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
 
-
-                /* SODS commands */
-                dl_data.acquired_data.status[0] |= STATUS_SODS;
-                camera_order = START_ACQUISITION; /* Camera start acquisition */
-                acquisition_timer = system_time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
-            }
+            current_experiment_state = SODS;
+            dl_data.acquired_data.status[0] |= STATUS_SODS;
+            LO_LED = 0;
+            SODS_LED = 1;
         }
 
         /* SOE signal */
-        if ((RXSM_SOE) && (SODSenable) && (LOenable) && (!SOEenable)) {
-            DEBOUNCEstate = 1;
-            if ((RXSM_SOE) && (SODSenable) && (LOenable) && (!SOEenable) && (DEBOUNCEflag)) {
-                SOEstate = 1;
-                SOEenable = 1;
-                SOE_LED = 1;
-                DEBOUNCEflag = 0;
+        if ((debounce_flags & SOE_DEBOUNCED_STATE) && (current_experiment_state == SODS)) {
 
-                SODSstate = 0;
-                SODS_LED = 0;
+            /* SOE commands */
+            heater_timer = system_time + TIME_HEATER_OFF; /* Set time for heater off */
 
-                /* SOE commands */
-                dl_data.acquired_data.status[0] |= STATUS_SOE;
-                heater_timer = system_time + TIME_HEATER_OFF; /* Set time for heater off */
-
-            }
+            current_experiment_state = SOE;
+            dl_data.acquired_data.status[0] |= STATUS_SOE;
+            SODS_LED = 0;
+            SOE_LED = 1;
         }
     }
 }
@@ -244,20 +292,6 @@ void interrupt isr(void)
         /** @todo Replace the modulo operation for performance */
         if ((system_time % RFH_ADC) == 0) {
             adc_conv_flag = 1; /* Starts adc conversion */
-        }
-
-        /* Timer for debounce system */
-        if (DEBOUNCEstate) {
-            debounce_timer++;
-            DEBOUNCEstate = 0;
-        }
-        else {
-            debounce_timer = 0;
-        }
-
-        if (debounce_timer >= TIME_DEBOUNCE) {
-            DEBOUNCEflag = 1;
-            debounce_timer = 0;
         }
     }
 

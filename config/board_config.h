@@ -46,7 +46,7 @@
 #define TIME_HEATER_OFF  20000  //Timer for Heater Power Off after predefined time (default 15000)
 #define RFH_HEATER  5           //Timer for refresh heater power (default X)
 #define RFH_ADC     100         //Timer for refresh ADC (default 100)
-#define TIME_DEBOUNCE    50     //Timer for debounce system (default 50)
+#define DEBOUNCE_TIME    50     //Timer for debounce system (default 50)
 #define TIME_ACQUISITION_OFF    140000  //Timer for stop the camera acquisition (default 140000)
 
 
