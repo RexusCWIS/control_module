@@ -22,7 +22,7 @@ SerialPortDialog::SerialPortDialog(QWidget *parent) :
     this->setLayout(m_layout);
 
     foreach(const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
-        this->addItem(info.portName());
+        m_deviceSelector->addItem(info.portName());
     }
 }
 
