@@ -84,9 +84,16 @@ SerialPortDialog::SerialPortDialog(QWidget *parent) :
     this->setWindowTitle(tr("Serial port parameters"));
 }
 
-SerialPortConfig * SerialPortDialog::getSerialPortConfig() const {
+SerialPortConfig SerialPortDialog::getSerialPortConfig() const {
 
+    SerialPortConfig config;
 
+    config.device = m_deviceSelector->currentText();
 
-    return m_serialPortConfig;
+    config.baudrate = (QSerialPort::BaudRate) m_baudrateSelector->itemData(m_baudrateSelector->currentIndex()).toInt();
+    config.dataBits = (QSerialPort::DataBits) m_dataBitsSelector->itemData(m_dataBitsSelector->currentIndex()).toInt();
+    config.parity   = (QSerialPort::Parity)   m_paritySelector->itemData(m_paritySelector->currentIndex()).toInt();
+    config.stopBits = (QSerialPort::StopBits) m_stopBitsSelector->itemData(m_stopBitsSelector->currentIndex()).toInt();
+
+    return config;
 }

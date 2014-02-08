@@ -16,7 +16,7 @@ class SerialPortDialog : public QDialog
     Q_OBJECT
 public:
     explicit SerialPortDialog(QWidget *parent = 0);
-    SerialPortConfig *getSerialPortConfig(void) const;
+    SerialPortConfig getSerialPortConfig(void) const;
 
 signals:
 
@@ -41,9 +41,6 @@ private:
     QGridLayout *m_selectorsLayout;
     QHBoxLayout *m_buttonsLayout;
     QVBoxLayout *m_mainLayout;
-
-
-    SerialPortConfig *m_serialPortConfig;
 };
 
 #endif // SERIALPORTDIALOG_H

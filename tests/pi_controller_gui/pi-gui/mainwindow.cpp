@@ -24,7 +24,11 @@ void MainWindow::showSerialConfigDlg(void) {
 
     if(rvalue == QDialog::Accepted) {
 
-        qDebug() << "New serial configuration";
+        const SerialPortConfig config = m_serialConfigDlg->getSerialPortConfig();
+        qDebug() << "New serial configuration:\nDevice: " << config.device <<
+                    "\nBaudrate: " << config.baudrate << "\nData bits: " <<
+                    config.dataBits << "\nParity: " << config.parity <<
+                    "\nStop bits: " << config.stopBits;
     }
 }
 
