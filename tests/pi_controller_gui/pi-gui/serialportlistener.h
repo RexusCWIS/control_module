@@ -14,6 +14,9 @@ class SerialPortListener: public QThread {
     Q_OBJECT
 
     public:
+
+        SerialPortListener(QObject *parent);
+
         SerialPortListener(QObject *parent, const QString &device,
                            QSerialPort::BaudRate baudrate,
                            QSerialPort::DataBits dataBits = QSerialPort::Data8,
@@ -28,8 +31,7 @@ class SerialPortListener: public QThread {
         void stop(void);
 
     public slots:
-        void setSerialPort(const QString &device);
-        void setBaudrate(QSerialPort::BaudRate baudrate);
+        void setSerialPortConfig(const SerialPortConfig &config);
         void clearRecordedData(void);
         void saveRecordedData(const QString &filename) const;
 
@@ -42,6 +44,7 @@ class SerialPortListener: public QThread {
 
     private:
         QVector<ExperimentData_s> *m_recordedData;
+
         QString m_serialPort;
         QSerialPort::BaudRate m_baudrate;
         QSerialPort::DataBits m_dataBits;

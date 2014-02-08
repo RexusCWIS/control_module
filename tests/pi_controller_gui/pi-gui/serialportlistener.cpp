@@ -8,11 +8,18 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include <QByteArray>
 
+SerialPortListener::SerialPortListener(QObject *parent) :
+            QThread(parent) {
+
+    m_stop = false;
+    m_recordedData = new QVector<ExperimentData_s>(0);
+}
+
 SerialPortListener::SerialPortListener(QObject *parent, const QString &device,
-                   QSerialPort::BaudRate baudrate,
-                   QSerialPort::DataBits dataBits,
-                   QSerialPort::Parity parity,
-                   QSerialPort::StopBits stopBits) : QThread(parent) {
+                    QSerialPort::BaudRate baudrate,
+                    QSerialPort::DataBits dataBits,
+                    QSerialPort::Parity parity,
+                    QSerialPort::StopBits stopBits) : QThread(parent) {
 
     m_serialPort = device;
 
@@ -21,20 +28,20 @@ SerialPortListener::SerialPortListener(QObject *parent, const QString &device,
     m_parity   = parity;
     m_stopBits = stopBits;
 
-    m_stop   = false;
+    m_stop = false;
     m_recordedData = new QVector<ExperimentData_s>(0);
+
+    start();
 }
 
 SerialPortListener::SerialPortListener(QObject *parent, const SerialPortConfig &config) : QThread(parent) {
 
-    m_serialPort = config.device;
-    m_baudrate   = config.baudrate;
-    m_dataBits   = config.dataBits;
-    m_parity     = config.parity;
-    m_stopBits   = config.stopBits;
+    this->setSerialPortConfig(config);
 
-    m_stop   = false;
+    m_stop = false;
     m_recordedData = new QVector<ExperimentData_s>(0);
+
+    start();
 }
 
 SerialPortListener::~SerialPortListener() {
@@ -56,17 +63,14 @@ void SerialPortListener::stop() {
         ;
 }
 
-void SerialPortListener::setSerialPort(const QString &device) {
+void SerialPortListener::setSerialPortConfig(const SerialPortConfig &config) {
 
     stop();
-    m_serialPort = device;
-    start();
-}
-
-void SerialPortListener::setBaudrate(QSerialPort::BaudRate baudrate) {
-
-    stop();
-    m_baudrate = baudrate;
+    m_serialPort = config.device;
+    m_baudrate   = config.baudrate;
+    m_dataBits   = config.dataBits;
+    m_parity     = config.parity;
+    m_stopBits   = config.stopBits;
     start();
 }
 
