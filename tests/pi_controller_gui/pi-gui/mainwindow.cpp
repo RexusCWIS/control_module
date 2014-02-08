@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,6 +21,11 @@ MainWindow::~MainWindow()
 void MainWindow::showSerialConfigDlg(void) {
 
     int rvalue = m_serialConfigDlg->exec();
+
+    if(rvalue == QDialog::Accepted) {
+
+        qDebug() << "New serial configuration";
+    }
 }
 
 void MainWindow::createActions(void) {
