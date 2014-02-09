@@ -117,7 +117,7 @@ void SerialPortListener::saveRecordedData(const QString &filename) const {
 
 void SerialPortListener::run() {
 
-    qDebug() << "SerialPortListener thread started";
+    qDebug() << "SerialPortListener thread started.";
     QSerialPort serial(m_serialPort);
 
     //qRegisterMetaType<ExperimentData_s>("ExperimentData_s");
