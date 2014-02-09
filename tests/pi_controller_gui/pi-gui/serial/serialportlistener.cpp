@@ -148,7 +148,7 @@ void SerialPortListener::run() {
         /** Adapt this for synchronization frames longer than 2 bytes */
         while(outOfSync) {
 
-            while(serial.bytesAvailable() < syncFrameSize) {
+            while((serial.bytesAvailable() < syncFrameSize) && !m_stop) {
                 serial.waitForReadyRead(100);
             }
             serial.read((char *) frame, 1);
@@ -163,7 +163,7 @@ void SerialPortListener::run() {
             }
         }
 
-        while(serial.bytesAvailable() < (m_sfd.size() - syncFrameSize)) {
+        while((serial.bytesAvailable() < (m_sfd.size() - syncFrameSize)) && !m_stop) {
             serial.waitForReadyRead(100);
         }
         /* Read the rest of the frame */

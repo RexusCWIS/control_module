@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     centralwidget.cpp \
     serial/serialportlistener.cpp \
     serial/serialportdialog.cpp \
-    serial/serialframedescriptor.cpp
+    serial/serialframedescriptor.cpp \
+    picontrollerserialportlistener.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
@@ -30,4 +31,5 @@ HEADERS  += mainwindow.h \
     serial/serialportlistener.h \
     serial/serialportdialog.h \
     serial/serialportconfig.h \
-    serial/serialframedescriptor.h
+    serial/serialframedescriptor.h \
+    picontrollerserialportlistener.h
