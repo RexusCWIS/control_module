@@ -13,12 +13,13 @@ SerialFrameDescriptor::SerialFrameDescriptor(int dataSize,
 
 SerialFrameDescriptor::SerialFrameDescriptor() {
 
-    m_dataSize = 0;
-    m_size     = 0;
-    m_crcType  = SerialFrameDescriptor::NO_CRC;
+    m_syncFrame = "U";
+    m_dataSize  = 1;
+    m_size      = 2;
+    m_crcType   = SerialFrameDescriptor::NO_CRC;
 }
 
-QString SerialFrameDescriptor::getSynchronisationFrame() const {
+QString SerialFrameDescriptor::getSynchronisationFrame(void) const {
 
     return m_syncFrame;
 }
@@ -33,7 +34,7 @@ int SerialFrameDescriptor::getDataSize(void) const {
     return m_dataSize;
 }
 
-bool SerialFrameDescriptor::hasCRC() const {
+bool SerialFrameDescriptor::hasCRC(void) const {
 
     return (m_crcType != SerialFrameDescriptor::NO_CRC);
 }
