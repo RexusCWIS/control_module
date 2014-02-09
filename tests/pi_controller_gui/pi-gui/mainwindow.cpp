@@ -2,7 +2,8 @@
 #include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent),
+      m_sfd(9, "UU", SerialFrameDescriptor::CRC16_CCITT)
 {
     m_stepPlot = new CentralWidget(this);
     this->setCentralWidget(m_stepPlot);
@@ -11,6 +12,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->createActions();
     this->createMenus();
+
+    m_serialPortListener = new PIControllerSerialPortListener(this);
+    m_serialPortListener->setSerialFrameDescriptor(m_sfd);
 }
 
 MainWindow::~MainWindow()
@@ -29,15 +33,17 @@ void MainWindow::showSerialConfigDlg(void) {
                     "\nBaudrate: " << config.baudrate << "\nData bits: " <<
                     config.dataBits << "\nParity: " << config.parity <<
                     "\nStop bits: " << config.stopBits;
+
+        m_serialPortListener->setSerialPortConfig(config);
     }
 }
 
 void MainWindow::createActions(void) {
 
-    m_saveAction = new QAction(tr("&Save"), this);
+    m_saveAction = new QAction(tr("Save"), this);
     m_saveAction->setShortcut(QKeySequence::Save);
 
-    m_serialConfigAction = new QAction(tr("&Serial"), this);
+    m_serialConfigAction = new QAction(tr("Serial"), this);
     QObject::connect(m_serialConfigAction, SIGNAL(triggered()), this, SLOT(showSerialConfigDlg()));
 }
 

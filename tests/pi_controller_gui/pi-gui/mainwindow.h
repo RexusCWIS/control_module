@@ -5,6 +5,7 @@
 
 #include "centralwidget.h"
 #include "serial/serialportdialog.h"
+#include "picontrollerserialportlistener.h"
 
 class MainWindow : public QMainWindow
 {
@@ -29,6 +30,9 @@ private:
     QAction *m_serialConfigAction;
 
     SerialPortDialog *m_serialConfigDlg;
+
+    PIControllerSerialPortListener *m_serialPortListener;
+    const SerialFrameDescriptor m_sfd;
 };
 
 #endif // MAINWINDOW_H
