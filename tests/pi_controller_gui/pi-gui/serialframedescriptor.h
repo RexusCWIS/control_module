@@ -12,13 +12,19 @@ public:
         CRC16_CCITT = 0x1021
     };
 
+    SerialFrameDescriptor();
+
     SerialFrameDescriptor(unsigned int dataSize,
                           const QString &synchronisationFrame,
                           SerialFrameDescriptor::CRC crcType = SerialFrameDescriptor::NO_CRC);
 
     unsigned int size(void) const;
+
     unsigned int getDataSize(void) const;
-    unsigned char* getData(void) const;
+
+    QString getSynchronisationFrame(void) const;
+
+    bool hasCRC(void) const;
 
 protected:
     QString m_syncFrame;
