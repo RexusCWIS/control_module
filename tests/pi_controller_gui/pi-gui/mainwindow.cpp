@@ -15,6 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_serialPortListener = new PIControllerSerialPortListener(this);
     m_serialPortListener->setSerialFrameDescriptor(m_sfd);
+
+    QObject::connect(m_serialPortListener, SIGNAL(newData(PIControlData)), m_stepPlot, SLOT(refresh(PIControlData)));
 }
 
 MainWindow::~MainWindow()

@@ -35,3 +35,13 @@ CentralWidget::CentralWidget(QWidget *parent) :
 
     m_plot->setMinimumSize(640, 480);
 }
+
+void CentralWidget::refresh(const PIControlData &data) {
+
+    float time = data.getTime();
+
+    m_plot->graph(0)->addData(time, data.getDutyCycle());
+    m_plot->graph(1)->addData(time, data.getTemperature());
+
+    m_plot->replot();
+}

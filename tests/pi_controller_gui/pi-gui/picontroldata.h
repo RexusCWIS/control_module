@@ -15,11 +15,7 @@ struct PIControlData {
         return (time / 1000.0f);
     }
 
-    float getTemperature(const unsigned int sensor) const {
-
-        if(sensor > 2) {
-            return -1.0f;
-        }
+    float getTemperature() const {
 
         return ((temperature * 70.0f / 1024.0f) - 10.0f);
     }

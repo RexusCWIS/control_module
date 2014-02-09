@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QHBoxLayout>
 
+#include "picontroldata.h"
 #include "qcustomplot.h"
 
 class CentralWidget : public QWidget
@@ -15,6 +16,7 @@ public:
 signals:
 
 public slots:
+    void refresh(const PIControlData &data);
 
 private:
     QCustomPlot *m_plot;
