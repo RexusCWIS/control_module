@@ -136,6 +136,18 @@ public slots:
      */
     void saveRecordedData(const QString &filename) const;
 
+    /**
+     * @brief Returns the number of invalid frames detected.
+     * @details A frame is declared invalid if its CRC is not zero.
+     * This function returns the number of frames that were containing an
+     * error detectable by CRC computation.
+     *
+     * This number is reset once the thread is restarted or when calling
+     * the @ref clearRecordedData function.
+     *
+     * @returns The number of frames that were containing an error
+     * detected by CRC computation.
+     */
     int getNumberOfInvalidFrames(void) const;
 
 protected:
@@ -187,6 +199,7 @@ protected:
     /** @brief Number of stop bits per received byte. */
     QSerialPort::StopBits m_stopBits;
 
+    /** @brief Number of frames containing an error detected by CRC computation. */
     int m_invalidFrames;
 
     /** @brief Boolean value used to stop the data reception thread. */

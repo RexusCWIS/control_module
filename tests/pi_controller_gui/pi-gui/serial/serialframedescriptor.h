@@ -3,6 +3,14 @@
 
 #include <QString>
 
+/**
+ * @brief The SerialFrameDescriptor class is used to describe the architecture of a data frame received over a serial line.
+ * @details This class provides informations about serial data frames. It defines the frame used for synchronisation
+ * (i.e. the data bytes at the start of each frame) and the number of data bytes.
+ *
+ * Optional informations are also given on CRC computation. The @ref SerialFrameDescriptor::CRC enum defines CRC polynomials
+ * used for error checking.
+ */
 class SerialFrameDescriptor
 {
 public:

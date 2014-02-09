@@ -92,6 +92,7 @@ void SerialPortListener::setSerialPortConfig(const SerialPortConfig &config) {
 
 void SerialPortListener::clearRecordedData(void) {
 
+    m_invalidFrames = 0;
     m_recordedData->clear();
 }
 
