@@ -146,7 +146,7 @@ void SerialPortListener::run() {
         outOfSync = true;
         /* Detect start of frame */
         /** Adapt this for synchronization frames longer than 2 bytes */
-        while(outOfSync) {
+        while(outOfSync && !m_stop) {
 
             while((serial.bytesAvailable() < syncFrameSize) && !m_stop) {
                 serial.waitForReadyRead(100);
@@ -166,6 +166,12 @@ void SerialPortListener::run() {
         while((serial.bytesAvailable() < (m_sfd.size() - syncFrameSize)) && !m_stop) {
             serial.waitForReadyRead(100);
         }
+
+        /* Exit the thread loop if the m_stop signal was sent */
+        if(m_stop) {
+            break;
+        }
+
         /* Read the rest of the frame */
         serial.read((char *) &frame[syncFrameSize - 1], frameSize - syncFrameSize);
 
@@ -211,6 +217,7 @@ void SerialPortListener::run() {
 
     delete [] frame;
     serial.close();
+    qDebug() << "SerialPortListener thread stopped.";
 }
 
 void SerialPortListener::parseData(const unsigned char *frame) {
