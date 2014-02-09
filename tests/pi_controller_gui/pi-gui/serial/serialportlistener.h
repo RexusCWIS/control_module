@@ -18,13 +18,17 @@ class SerialPortListener: public QThread {
 
         SerialPortListener(QObject *parent);
 
-        SerialPortListener(QObject *parent, const QString &device,
+        SerialPortListener(QObject *parent,
+                           const SerialFrameDescriptor &sfd,
+                           const QString &device,
                            QSerialPort::BaudRate baudrate,
                            QSerialPort::DataBits dataBits = QSerialPort::Data8,
                            QSerialPort::Parity parity = QSerialPort::NoParity,
                            QSerialPort::StopBits stopBits = QSerialPort::OneStop);
 
-        SerialPortListener(QObject *parent, const SerialPortConfig &config);
+        SerialPortListener(QObject *parent,
+                           const SerialFrameDescriptor &sfd,
+                           const SerialPortConfig &config);
 
         virtual ~SerialPortListener();
 

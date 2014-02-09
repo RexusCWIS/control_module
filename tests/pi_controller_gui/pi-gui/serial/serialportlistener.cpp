@@ -15,11 +15,13 @@ SerialPortListener::SerialPortListener(QObject *parent) :
     m_recordedData = new QVector<unsigned char>(0);
 }
 
-SerialPortListener::SerialPortListener(QObject *parent, const QString &device,
-                    QSerialPort::BaudRate baudrate,
-                    QSerialPort::DataBits dataBits,
-                    QSerialPort::Parity parity,
-                    QSerialPort::StopBits stopBits) : QThread(parent) {
+SerialPortListener::SerialPortListener(QObject *parent,
+                                       const SerialFrameDescriptor &sfd,
+                                       const QString &device,
+                                       QSerialPort::BaudRate baudrate,
+                                       QSerialPort::DataBits dataBits,
+                                       QSerialPort::Parity parity,
+                                       QSerialPort::StopBits stopBits) : QThread(parent) {
 
     m_serialPort = device;
 
@@ -31,12 +33,18 @@ SerialPortListener::SerialPortListener(QObject *parent, const QString &device,
     m_stop = false;
     m_recordedData = new QVector<unsigned char>(0);
 
+    this->setSerialFrameDescriptor(sfd);
+
     start();
 }
 
-SerialPortListener::SerialPortListener(QObject *parent, const SerialPortConfig &config) : QThread(parent) {
+SerialPortListener::SerialPortListener(QObject *parent,
+                                       const SerialFrameDescriptor &sfd,
+                                       const SerialPortConfig &config) : QThread(parent) {
 
     this->setSerialPortConfig(config);
+
+    this->setSerialFrameDescriptor(sfd);
 
     m_stop = false;
     m_recordedData = new QVector<unsigned char>(0);
