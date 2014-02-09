@@ -95,8 +95,8 @@ void SerialPortListener::saveRecordedData(const QString &filename) const {
         QTextStream out(&file);
         out << "Time [ms]\tTemperature 1\tTemperature2\tTemperature3\tPressure\tStatus Flags\n";
 
-        for(unsigned int f = 0; f < m_recordedData->size(); f += m_sfd.size()) {
-            for(unsigned int index = 0; index < m_sfd.size(); index++) {
+        for(int f = 0; f < m_recordedData->size(); f += m_sfd.size()) {
+            for(int index = 0; index < m_sfd.size(); index++) {
                 out << m_recordedData->at(f * m_sfd.size() + index) << "\t";
             }
 
@@ -118,7 +118,6 @@ void SerialPortListener::run() {
 
     bool outOfSync  = true,
          validFrame = true;
-    unsigned char status[2] = {0, 0};
 
     serial.open(QIODevice::ReadOnly);
 
@@ -189,6 +188,8 @@ void SerialPortListener::run() {
             emit newSensorData(experimentData);
             */
 
+            parseData(frame);
+
             for(unsigned int index = 0; index < frameSize; index++) {
                 m_recordedData->append(frame[index]);
             }
@@ -204,3 +205,8 @@ void SerialPortListener::run() {
     serial.close();
 }
 
+void SerialPortListener::parseData(const unsigned char *frame) {
+
+    (void) frame;
+    return;
+}

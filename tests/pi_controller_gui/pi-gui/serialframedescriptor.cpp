@@ -1,6 +1,6 @@
 #include "serialframedescriptor.h"
 
-SerialFrameDescriptor::SerialFrameDescriptor(unsigned int dataSize,
+SerialFrameDescriptor::SerialFrameDescriptor(int dataSize,
                                              const QString &synchronisationFrame,
                                              SerialFrameDescriptor::CRC crcType) {
 
@@ -23,12 +23,12 @@ QString SerialFrameDescriptor::getSynchronisationFrame() const {
     return m_syncFrame;
 }
 
-unsigned int SerialFrameDescriptor::size(void) const {
+int SerialFrameDescriptor::size(void) const {
 
     return m_size;
 }
 
-unsigned int SerialFrameDescriptor::getDataSize(void) const {
+int SerialFrameDescriptor::getDataSize(void) const {
 
     return m_dataSize;
 }

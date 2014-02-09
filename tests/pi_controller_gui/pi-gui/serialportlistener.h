@@ -44,6 +44,7 @@ class SerialPortListener: public QThread {
 
     protected:
         void run();
+        virtual void parseData(const unsigned char* frame);
 
         QVector<unsigned char> *m_recordedData;
 

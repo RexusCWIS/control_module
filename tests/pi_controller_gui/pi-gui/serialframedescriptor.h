@@ -14,13 +14,13 @@ public:
 
     SerialFrameDescriptor();
 
-    SerialFrameDescriptor(unsigned int dataSize,
+    SerialFrameDescriptor(int dataSize,
                           const QString &synchronisationFrame,
                           SerialFrameDescriptor::CRC crcType = SerialFrameDescriptor::NO_CRC);
 
-    unsigned int size(void) const;
+    int size(void) const;
 
-    unsigned int getDataSize(void) const;
+    int getDataSize(void) const;
 
     QString getSynchronisationFrame(void) const;
 
@@ -29,8 +29,8 @@ public:
 protected:
     QString m_syncFrame;
 
-    unsigned int m_size;
-    unsigned int m_dataSize;
+    int m_size;
+    int m_dataSize;
     unsigned char *m_data;
 
     SerialFrameDescriptor::CRC m_crcType;
