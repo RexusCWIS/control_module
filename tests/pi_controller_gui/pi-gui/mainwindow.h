@@ -4,7 +4,7 @@
 #include <QMainWindow>
 
 #include "centralwidget.h"
-#include "serialportdialog.h"
+#include "serial/serialportdialog.h"
 
 class MainWindow : public QMainWindow
 {
