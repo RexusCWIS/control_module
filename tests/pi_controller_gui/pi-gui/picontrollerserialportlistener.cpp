@@ -19,4 +19,14 @@ PIControllerSerialPortListener::PIControllerSerialPortListener(QObject *parent,
 
 void PIControllerSerialPortListener::parseData(const unsigned char *frame) {
 
+    PIControlData data;
+
+    data.time = (((unsigned int) frame[5]) << 24) + (((unsigned int) frame[4]) << 16) +
+            (((unsigned int) frame[3]) << 8) + ((unsigned int) frame[2]);
+
+    data.temperature = (((unsigned int) frame[7]) << 8) + ((unsigned int) frame[6]);
+
+    data.dutyCycle = (unsigned int) frame[8];
+
+    emit newData(data);
 }

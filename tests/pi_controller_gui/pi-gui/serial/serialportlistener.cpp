@@ -181,27 +181,6 @@ void SerialPortListener::run() {
 
         if(validFrame) {
 
-            /* Separate data and emit related signals */
-            /*
-            experimentData.time = (((unsigned int) dataFrame[5]) << 24) + (((unsigned int) dataFrame[4]) << 16) +
-                   (((unsigned int) dataFrame[3]) << 8) + ((unsigned int) dataFrame[2]);
-
-            for(int index = 6; index < 12; index += 2) {
-                experimentData.temperature[(index >> 1) - 3] = (((unsigned int) dataFrame[index + 1]) << 8) +
-                                                ((unsigned int) dataFrame[index]);
-            }
-
-            experimentData.pressure = (((unsigned int) dataFrame[13]) << 8) +
-                                      ((unsigned int) dataFrame[12]);
-
-            status[0] = dataFrame[14];
-            status[1] = dataFrame[15];
-
-            qDebug() << experimentData.time << ": " << experimentData.pressure << "\n";
-            emit newStatus((status[0] & 0x7));
-            emit newSensorData(experimentData);
-            */
-
             parseData(frame);
 
             for(unsigned int index = 0; index < frameSize; index++) {

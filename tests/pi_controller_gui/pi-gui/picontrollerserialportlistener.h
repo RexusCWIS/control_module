@@ -7,6 +7,8 @@
 
 class PIControllerSerialPortListener : public SerialPortListener {
 
+    Q_OBJECT
+
 public:
     PIControllerSerialPortListener(QObject *parent);
 
