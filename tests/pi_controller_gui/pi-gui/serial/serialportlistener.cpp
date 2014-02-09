@@ -12,7 +12,8 @@ SerialPortListener::SerialPortListener(QObject *parent) :
             QThread(parent) {
 
     m_stop = false;
-    m_recordedData = new QVector<unsigned char>(0);
+    m_invalidFrames = 0;
+    m_recordedData  = new QVector<unsigned char>(0);
 }
 
 SerialPortListener::SerialPortListener(QObject *parent,
@@ -31,7 +32,8 @@ SerialPortListener::SerialPortListener(QObject *parent,
     m_stopBits = stopBits;
 
     m_stop = false;
-    m_recordedData = new QVector<unsigned char>(0);
+    m_invalidFrames = 0;
+    m_recordedData  = new QVector<unsigned char>(0);
 
     this->setSerialFrameDescriptor(sfd);
 
@@ -47,7 +49,8 @@ SerialPortListener::SerialPortListener(QObject *parent,
     this->setSerialFrameDescriptor(sfd);
 
     m_stop = false;
-    m_recordedData = new QVector<unsigned char>(0);
+    m_invalidFrames = 0;
+    m_recordedData  = new QVector<unsigned char>(0);
 
     start();
 }
@@ -115,6 +118,11 @@ void SerialPortListener::saveRecordedData(const QString &filename) const {
     }
 }
 
+int SerialPortListener::getNumberOfInvalidFrames(void) const {
+
+    return m_invalidFrames;
+}
+
 void SerialPortListener::run() {
 
     qDebug() << "SerialPortListener thread started.";
@@ -122,7 +130,7 @@ void SerialPortListener::run() {
 
     //qRegisterMetaType<ExperimentData_s>("ExperimentData_s");
 
-    unsigned int invalidFrames = 0;
+    m_invalidFrames = 0;
 
     bool outOfSync  = true,
          validFrame = true;
@@ -189,8 +197,8 @@ void SerialPortListener::run() {
         }
 
         else {
-            invalidFrames++;
-            qDebug() << "Invalid Frames: " << invalidFrames << "\n";
+            m_invalidFrames++;
+            qDebug() << "Invalid Frames: " << m_invalidFrames << "\n";
         }
     }
 

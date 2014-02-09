@@ -136,6 +136,8 @@ public slots:
      */
     void saveRecordedData(const QString &filename) const;
 
+    int getNumberOfInvalidFrames(void) const;
+
 protected:
 
     /**
@@ -184,6 +186,8 @@ protected:
     QSerialPort::Parity   m_parity;
     /** @brief Number of stop bits per received byte. */
     QSerialPort::StopBits m_stopBits;
+
+    int m_invalidFrames;
 
     /** @brief Boolean value used to stop the data reception thread. */
     volatile bool m_stop;
