@@ -34,14 +34,13 @@ class SerialPortListener: public QThread {
         void start(void);
         void stop(void);
 
-        void setSerialFrameDescriptor(const SerialFrameDescriptor &sfd);
-
     public slots:
         void setSerialPortConfig(const SerialPortConfig &config);
         void clearRecordedData(void);
         void saveRecordedData(const QString &filename) const;
 
     protected:
+        void setSerialFrameDescriptor(const SerialFrameDescriptor &sfd);
         void run();
         virtual void parseData(const unsigned char* frame);
 
