@@ -15,19 +15,19 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     qcustomplot.cpp \
-    serialportlistener.cpp \
     crc.c \
     crc_table.c \
     centralwidget.cpp \
-    serialportdialog.cpp \
-    serialframedescriptor.cpp
+    serial/serialportlistener.cpp \
+    serial/serialportdialog.cpp \
+    serial/serialframedescriptor.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
-    serialportlistener.h \
     experiment.h \
     crc.h \
     centralwidget.h \
-    serialportdialog.h \
-    serialportconfig.h \
-    serialframedescriptor.h
+    serial/serialportlistener.h \
+    serial/serialportdialog.h \
+    serial/serialportconfig.h \
+    serial/serialframedescriptor.h
