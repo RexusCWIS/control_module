@@ -12,7 +12,7 @@ SerialPortListener::SerialPortListener(QObject *parent) :
             QThread(parent) {
 
     m_stop = false;
-    m_recordedData = new QVector<ExperimentData_s>(0);
+    m_recordedData = new QVector<unsigned char>(0);
 }
 
 SerialPortListener::SerialPortListener(QObject *parent, const QString &device,
@@ -29,7 +29,7 @@ SerialPortListener::SerialPortListener(QObject *parent, const QString &device,
     m_stopBits = stopBits;
 
     m_stop = false;
-    m_recordedData = new QVector<ExperimentData_s>(0);
+    m_recordedData = new QVector<unsigned char>(0);
 
     start();
 }
@@ -39,7 +39,7 @@ SerialPortListener::SerialPortListener(QObject *parent, const SerialPortConfig &
     this->setSerialPortConfig(config);
 
     m_stop = false;
-    m_recordedData = new QVector<ExperimentData_s>(0);
+    m_recordedData = new QVector<unsigned char>(0);
 
     start();
 }
@@ -61,6 +61,11 @@ void SerialPortListener::stop() {
     m_stop = true;
     while(isRunning())
         ;
+}
+
+void SerialPortListener::setSerialFrameDescriptor(const SerialFrameDescriptor &sfd) {
+
+    m_sfd = sfd;
 }
 
 void SerialPortListener::setSerialPortConfig(const SerialPortConfig &config) {
@@ -90,10 +95,12 @@ void SerialPortListener::saveRecordedData(const QString &filename) const {
         QTextStream out(&file);
         out << "Time [ms]\tTemperature 1\tTemperature2\tTemperature3\tPressure\tStatus Flags\n";
 
-        QVector<ExperimentData_s>::iterator it;
-        for(it = m_recordedData->begin(); it != m_recordedData->end(); it++) {
-            out << it->time << "\t" << it->temperature[0] << "\t" << it->temperature[1] << "\t" <<
-                   it->temperature[2] << "\t" << it->pressure << "\t" << it->status << "\n";
+        for(unsigned int f = 0; f < m_recordedData->size(); f += m_sfd.size()) {
+            for(unsigned int index = 0; index < m_sfd.size(); index++) {
+                out << m_recordedData->at(f * m_sfd.size() + index) << "\t";
+            }
+
+            out << "\n";
         }
 
         file.close();
@@ -102,13 +109,10 @@ void SerialPortListener::saveRecordedData(const QString &filename) const {
 
 void SerialPortListener::run() {
 
+    qDebug() << "SerialPortListener thread started";
     QSerialPort serial(m_serialPort);
-    unsigned char dataFrame[24];
 
-    ExperimentData_s experimentData;
-
-    qRegisterMetaType<ExperimentData_s>("ExperimentData_s");
-    qDebug() << "Thread started";
+    //qRegisterMetaType<ExperimentData_s>("ExperimentData_s");
 
     unsigned int invalidFrames = 0;
 
@@ -123,39 +127,49 @@ void SerialPortListener::run() {
     serial.setParity(m_parity);
     serial.setStopBits(m_stopBits);
 
+    unsigned int syncFrameSize = m_sfd.getSynchronisationFrame().size();
+    unsigned int frameSize = m_sfd.size();
+    const char* syncFrame  = m_sfd.getSynchronisationFrame().toStdString().c_str();
+
+    unsigned char* frame = new unsigned char[frameSize];
+
     while(!m_stop) {
 
         /** @todo Detect loss of synchronisation */
         outOfSync = true;
-        /* Detect start of frame ("UU") */
+        /* Detect start of frame */
+        /** Adapt this for synchronization frames longer than 2 bytes */
         while(outOfSync) {
 
-            while(serial.bytesAvailable() < 2) {
+            while(serial.bytesAvailable() < syncFrameSize) {
                 serial.waitForReadyRead(100);
             }
-            serial.read((char *) dataFrame, 1);
+            serial.read((char *) frame, 1);
 
-            if(dataFrame[0] == 'U') {
-                serial.read((char *) &dataFrame[1], 1);
+            if(frame[0] == (unsigned char) syncFrame[0]) {
 
-                if(dataFrame[1] == 'U') {
+                serial.read((char *) &frame[1], 1);
+
+                if(frame[1] == (unsigned char) syncFrame[1]) {
                     outOfSync = false;
                 }
             }
         }
 
-        while(serial.bytesAvailable() < 22) {
+        while(serial.bytesAvailable() < (m_sfd.size() - syncFrameSize)) {
             serial.waitForReadyRead(100);
         }
-        /* Read the remaining 22 bytes */
-        serial.read((char *) &dataFrame[2], 22);
+        /* Read the rest of the frame */
+        serial.read((char *) &frame[syncFrameSize - 1], frameSize - syncFrameSize);
 
-        validFrame = (crc(dataFrame, 24) == 0);
+        if(m_sfd.hasCRC()) {
+            validFrame = (crc(frame, frameSize) == 0);
+        }
 
         if(validFrame) {
 
             /* Separate data and emit related signals */
-            /** @todo Implement unit conversion */
+            /*
             experimentData.time = (((unsigned int) dataFrame[5]) << 24) + (((unsigned int) dataFrame[4]) << 16) +
                    (((unsigned int) dataFrame[3]) << 8) + ((unsigned int) dataFrame[2]);
 
@@ -170,11 +184,14 @@ void SerialPortListener::run() {
             status[0] = dataFrame[14];
             status[1] = dataFrame[15];
 
-            m_recordedData->append(experimentData);
-
             qDebug() << experimentData.time << ": " << experimentData.pressure << "\n";
             emit newStatus((status[0] & 0x7));
             emit newSensorData(experimentData);
+            */
+
+            for(unsigned int index = 0; index < frameSize; index++) {
+                m_recordedData->append(frame[index]);
+            }
         }
 
         else {
@@ -183,5 +200,7 @@ void SerialPortListener::run() {
         }
     }
 
+    delete [] frame;
     serial.close();
 }
+

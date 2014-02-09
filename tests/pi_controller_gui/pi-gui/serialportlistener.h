@@ -3,6 +3,7 @@
 
 #include "experiment.h"
 #include "serialportconfig.h"
+#include "serialframedescriptor.h"
 
 #include <QVector>
 #include <QThread>
@@ -30,6 +31,8 @@ class SerialPortListener: public QThread {
         void start(void);
         void stop(void);
 
+        void setSerialFrameDescriptor(const SerialFrameDescriptor &sfd);
+
     public slots:
         void setSerialPortConfig(const SerialPortConfig &config);
         void clearRecordedData(void);
@@ -42,8 +45,9 @@ class SerialPortListener: public QThread {
     protected:
         void run();
 
-    private:
-        QVector<ExperimentData_s> *m_recordedData;
+        QVector<unsigned char> *m_recordedData;
+
+        SerialFrameDescriptor m_sfd;
 
         QString m_serialPort;
         QSerialPort::BaudRate m_baudrate;
