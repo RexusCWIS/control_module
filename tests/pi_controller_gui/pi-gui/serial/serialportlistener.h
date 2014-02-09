@@ -1,7 +1,6 @@
 #ifndef SERIALPORTLISTENER_H
 #define SERIALPORTLISTENER_H
 
-#include "experiment.h"
 #include "serialportconfig.h"
 #include "serialframedescriptor.h"
 
@@ -41,10 +40,6 @@ class SerialPortListener: public QThread {
         void setSerialPortConfig(const SerialPortConfig &config);
         void clearRecordedData(void);
         void saveRecordedData(const QString &filename) const;
-
-    signals:
-        void newStatus(unsigned char);
-        void newSensorData(ExperimentData_s);
 
     protected:
         void run();

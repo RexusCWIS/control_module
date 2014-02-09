@@ -25,11 +25,11 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
-    experiment.h \
     crc.h \
     centralwidget.h \
     serial/serialportlistener.h \
     serial/serialportdialog.h \
     serial/serialportconfig.h \
     serial/serialframedescriptor.h \
-    picontrollerserialportlistener.h
+    picontrollerserialportlistener.h \
+    picontroldata.h

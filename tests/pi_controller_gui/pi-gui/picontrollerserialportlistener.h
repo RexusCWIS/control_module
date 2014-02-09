@@ -3,6 +3,8 @@
 
 #include "serial/serialportlistener.h"
 
+#include "picontroldata.h"
+
 class PIControllerSerialPortListener : public SerialPortListener {
 
 public:
@@ -21,6 +23,7 @@ public:
                                    const SerialPortConfig &config);
 
 signals:
+    void newData(const PIControlData &data);
 
 protected:
     void parseData(const unsigned char *frame);
