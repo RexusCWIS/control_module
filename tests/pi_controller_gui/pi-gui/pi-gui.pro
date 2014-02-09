@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     crc.c \
     crc_table.c \
     centralwidget.cpp \
-    serialportdialog.cpp
+    serialportdialog.cpp \
+    serialframedescriptor.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
@@ -28,4 +29,5 @@ HEADERS  += mainwindow.h \
     crc.h \
     centralwidget.h \
     serialportdialog.h \
-    serialportconfig.h
+    serialportconfig.h \
+    serialframedescriptor.h
