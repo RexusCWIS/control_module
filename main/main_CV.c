@@ -18,9 +18,6 @@
 #include "drivers/i2c_slave.h"
 #include "libs/crc.h"
 
-#define EEPROM_FLAGS_ADDR   0x42u
-#define EEPROM_FLAGS_EODS   (1 << 0)
-
 static uint32_t system_time;
 
 static uint8_t eeprom_flags = 0;

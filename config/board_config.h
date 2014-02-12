@@ -8,6 +8,9 @@
 
 #include <htc.h>
 
+#define EEPROM_FLAGS_ADDR   0x42u
+#define EEPROM_FLAGS_EODS   (1 << 0)
+
 /* I/O macros */
 #define ADC_CONVERSION  ADCON0bits.GO
 
