@@ -14,10 +14,16 @@
 #include "config/pic18f2520_config.h"
 #include "config/board_config.h"
 
+#include "drivers/eeprom.h"
 #include "drivers/i2c_slave.h"
 #include "libs/crc.h"
 
-uint32_t system_time;
+#define EEPROM_FLAGS_ADDR   0x42u
+#define EEPROM_FLAGS_EODS   (1 << 0)
+
+static uint32_t system_time;
+
+static uint8_t eeprom_flags = 0;
 
 /* Control loop variables */
 int heater_power = 0; 
@@ -89,6 +95,8 @@ void main(void) {
 
     board_config(); /* Register Init */
     i2c_slave_init(I2C_ADDRESS); /* I2C Init */
+
+    eeprom_flags = eeprom_read_byte(EEPROM_FLAGS_ADDR);
 
     uart_send_data(boot_msg, sizeof(boot_msg)); 
 
@@ -280,7 +288,9 @@ void interrupt isr(void)
 
         /* Timer for stop the camera acquisition */
         if (system_time == acquisition_timer) {
-            camera_order = STOP_ACQUISITION;
+            camera_order  = STOP_ACQUISITION;
+            eeprom_flags |= EEPROM_FLAGS_EODS;
+            eeprom_write_byte(eeprom_flags, EEPROM_FLAGS_ADDR);
         }
 
         /* Timer for heater off */
@@ -397,8 +407,7 @@ void interrupt isr(void)
 /** @todo Implement overflow control */
 void uart_send_data(uint8_t data[], uint8_t size) {
 
-    uint16_t index = 0u;
-    uint8_t idle = (serial_tx_buf_tail == serial_tx_buf_head); 
+    uint16_t index = 0u; 
 
     while(index < size) {
         serial_tx_buf[serial_tx_buf_tail] = data[index];
