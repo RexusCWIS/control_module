@@ -9,6 +9,7 @@
       <itemPath>../../libs/crc.h</itemPath>
       <itemPath>../../config/board_config.h</itemPath>
       <itemPath>../../drivers/types.h</itemPath>
+      <itemPath>../../drivers/eeprom.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -22,6 +23,7 @@
       <itemPath>../../libs/crc.c</itemPath>
       <itemPath>../../libs/crc_table.c</itemPath>
       <itemPath>../../config/board_config.c</itemPath>
+      <itemPath>../../drivers/eeprom.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
