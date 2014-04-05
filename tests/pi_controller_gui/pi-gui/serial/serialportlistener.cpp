@@ -131,6 +131,7 @@ void SerialPortListener::run() {
 
     //qRegisterMetaType<ExperimentData_s>("ExperimentData_s");
 
+    m_validFrames   = 0;
     m_invalidFrames = 0;
 
     bool outOfSync  = true,
@@ -145,9 +146,10 @@ void SerialPortListener::run() {
 
     unsigned int syncFrameSize = m_sfd.getSynchronisationFrame().size();
     unsigned int frameSize = m_sfd.size();
-    const char* syncFrame  = m_sfd.getSynchronisationFrame().toStdString().c_str();
-
-    unsigned char* frame = new unsigned char[frameSize];
+    //const char* syncFrame  = m_sfd.getSynchronisationFrame().toStdString().c_str();
+    const char syncFrame[3] = "UU";
+    unsigned char frame[13];
+    //unsigned char* frame = new unsigned char[frameSize]();
 
     while(!m_stop) {
 
@@ -172,7 +174,7 @@ void SerialPortListener::run() {
             }
         }
 
-        while((serial.bytesAvailable() < (m_sfd.size() - syncFrameSize)) && !m_stop) {
+        while((serial.bytesAvailable() < (frameSize - syncFrameSize)) && !m_stop) {
             serial.waitForReadyRead(100);
         }
 
@@ -182,13 +184,16 @@ void SerialPortListener::run() {
         }
 
         /* Read the rest of the frame */
-        serial.read((char *) &frame[syncFrameSize - 1], frameSize - syncFrameSize);
+        serial.read((char *) &frame[syncFrameSize], frameSize - syncFrameSize);
 
         if(m_sfd.hasCRC()) {
             validFrame = (crc(frame, frameSize) == 0);
         }
 
         if(validFrame) {
+
+            m_validFrames++;
+            qDebug() << "Valid Frames: " << m_validFrames << "\n";
 
             parseData(frame);
 
@@ -203,7 +208,7 @@ void SerialPortListener::run() {
         }
     }
 
-    delete [] frame;
+    //delete [] frame;
     serial.close();
     qDebug() << "SerialPortListener thread stopped.";
 }

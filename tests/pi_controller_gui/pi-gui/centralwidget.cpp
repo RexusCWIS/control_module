@@ -40,8 +40,12 @@ void CentralWidget::refresh(const PIControlData &data) {
 
     float time = data.getTime();
 
-    m_plot->graph(0)->addData(time, data.getDutyCycle());
-    m_plot->graph(1)->addData(time, data.getTemperature());
+    //m_plot->graph(0)->addData(time, data.getDutyCycle());
+    m_plot->graph(0)->addData(time, 61);
+    m_plot->graph(1)->addData(time, 42);
+    //m_plot->graph(1)->addData(time, data.getTemperature());
+
+    qDebug() << time << "s: " << data.getDutyCycle() << data.getTemperature();
 
     m_plot->replot();
 }

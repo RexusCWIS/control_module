@@ -1,7 +1,10 @@
 #include "picontrollerserialportlistener.h"
 
 PIControllerSerialPortListener::PIControllerSerialPortListener(QObject *parent) :
-        SerialPortListener(parent) {}
+        SerialPortListener(parent) {
+
+    qRegisterMetaType<PIControlData>("PIControlData");
+}
 
 PIControllerSerialPortListener::PIControllerSerialPortListener(QObject *parent,
                                                                const SerialFrameDescriptor &sfd,
@@ -10,12 +13,18 @@ PIControllerSerialPortListener::PIControllerSerialPortListener(QObject *parent,
                                                                QSerialPort::DataBits dataBits,
                                                                QSerialPort::Parity parity,
                                                                QSerialPort::StopBits stopBits) :
-    SerialPortListener(parent, sfd, device, baudrate, dataBits, parity, stopBits) {}
+    SerialPortListener(parent, sfd, device, baudrate, dataBits, parity, stopBits) {
+
+    qRegisterMetaType<PIControlData>("PIControlData");
+}
 
 PIControllerSerialPortListener::PIControllerSerialPortListener(QObject *parent,
                                                                const SerialFrameDescriptor &sfd,
                                                                const SerialPortConfig &config) :
-    SerialPortListener(parent, sfd, config) {}
+    SerialPortListener(parent, sfd, config) {
+
+    qRegisterMetaType<PIControlData>("PIControlData");
+}
 
 void PIControllerSerialPortListener::parseData(const unsigned char *frame) {
 

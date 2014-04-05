@@ -18,8 +18,10 @@
 #include "drivers/i2c_slave.h"
 #include "libs/crc.h"
 
+/** @brief Global system time. */
 static uint32_t system_time;
 
+/** @brief Status flags stored in EEPROM at the end of each run. */
 static uint8_t eeprom_flags = 0;
 
 /* Control loop variables */
@@ -31,7 +33,8 @@ static uint8_t dummy = 0;
 /* UART variables */
 
 /** @brief Downlink data frame. */
-static serial_frame_s dl_data;
+static serial_frame_s dl_data = {{'U', 'U'}, {0, {0, 0, 0}, 0, 0, 0},
+                                {0, 0, 0}, {0, 0}, {0, 0}};
 /** @brief Serial line circular buffer. */
 static uint8_t serial_tx_buf[16*sizeof(serial_frame_s)];
 /** @brief Serial TX ISR increment variable. */
@@ -74,7 +77,7 @@ static void timer_init(void);
 static uint32_t laser_timer = 0, heater_timer = 0, debounce_timer = 0,
                 acquisition_timer = 0;
 
-static uint8_t  debounce_flags = 0, adc_conv_flag = 0;
+static uint8_t  debounce_flags = 0, adc_conv_flag = 0, adc_conv_timer = 0;
 static uint32_t lo_debounce_time = 0, sods_debounce_time = 0,
                 soe_debounce_time = 0;
 
@@ -87,8 +90,8 @@ void main(void) {
     experiment_state_e current_experiment_state = BOOT;
 
     dl_data.sync[0] = 'U';
-    dl_data.sync[1] = 'U'; 
-    dl_data.acquired_data.status[0] |= STATUS_POWER_ON;
+    dl_data.sync[1] = 'U';
+    dl_data.acquired_data.status |= STATUS_POWER_ON;
 
     board_config(); /* Register Init */
     i2c_slave_init(I2C_ADDRESS); /* I2C Init */
@@ -138,6 +141,8 @@ void main(void) {
                 ;
             dl_data.acquired_data.pressure = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
 
+            dl_data.acquired_data.heating = HEATER;
+
             /* CRC computation */
             crc16 = crc((uint8_t *) &dl_data, (sizeof(serial_frame_s) - 2u));
             dl_data.crc[0] = (uint8_t) (crc16 >> 8u);
@@ -149,16 +154,14 @@ void main(void) {
             /* Heater control loop */
             if (current_experiment_state == SOE) {
 
-                if (system_time % RFH_HEATER == 0) {
-                    /* Compute the error between the setpoint and the actual temperature */
-                    heater_power = TEMPERATURE_CONTROL_SETPOINT - (int16_t) dl_data.acquired_data.temperatures[0];
-                    /* Multiply it by the proportional gain */
-                    heater_power *= TEMPERATURE_CONTROL_PGAIN;
+                /* Compute the error between the setpoint and the actual temperature */
+                heater_power = TEMPERATURE_CONTROL_SETPOINT - (int16_t) dl_data.acquired_data.temperatures[0];
+                /* Multiply it by the proportional gain */
+                heater_power *= TEMPERATURE_CONTROL_PGAIN;
 
-                    /* Apply system limits (no cooling, 8-bit duty cycle) */
-                    heater_power = (heater_power < 0) ? 0 : heater_power;
-                    HEATER = (uint8_t) (heater_power & 0xFFu);
-                }
+                /* Apply system limits (no cooling, 8-bit duty cycle) */
+                heater_power = (heater_power < 0) ? 0 : heater_power;
+                HEATER = (uint8_t) (heater_power & 0xFFu);
             }
         }
 
@@ -232,7 +235,7 @@ void main(void) {
             /* LO commands */
             laser_timer = system_time + TIME_LASER_ON; /* Set time for laser on */
             current_experiment_state = LO;
-            dl_data.acquired_data.status[0] |= STATUS_LO;
+            dl_data.acquired_data.status |= STATUS_LO;
             LO_LED = 1;
         }
 
@@ -244,7 +247,7 @@ void main(void) {
             acquisition_timer = system_time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
 
             current_experiment_state = SODS;
-            dl_data.acquired_data.status[0] |= STATUS_SODS;
+            dl_data.acquired_data.status |= STATUS_SODS;
             LO_LED = 0;
             SODS_LED = 1;
         }
@@ -256,7 +259,7 @@ void main(void) {
             heater_timer = system_time + TIME_HEATER_OFF; /* Set time for heater off */
 
             current_experiment_state = SOE;
-            dl_data.acquired_data.status[0] |= STATUS_SOE;
+            dl_data.acquired_data.status |= (STATUS_SOE | STATUS_HEATER_ON);
             SODS_LED = 0;
             SOE_LED = 1;
         }
@@ -276,10 +279,11 @@ void interrupt isr(void)
         TMR0L = T0_RELOAD_LOW;
 
         system_time++; /* Global time */
+        adc_conv_timer++;
 
         /* Timer for laser on */
         if (system_time == laser_timer) {
-            dl_data.acquired_data.status[0] |= STATUS_LASER_ON; 
+            dl_data.acquired_data.status |= STATUS_LASER_ON; 
             LASER_CONTROL = 1; /* Laser power on */
         }
 
@@ -293,12 +297,14 @@ void interrupt isr(void)
         /* Timer for heater off */
         if (system_time == heater_timer) {
             HEATER = 0;
+            dl_data.acquired_data.status &= ~STATUS_HEATER_ON;
         }
 
         /* ADC conversion rate */
         /** @todo Replace the modulo operation for performance */
-        if ((system_time % RFH_ADC) == 0) {
-            adc_conv_flag = 1; /* Starts adc conversion */
+        if (adc_conv_timer == RFH_ADC) {
+            adc_conv_flag  = 1; /* Starts adc conversion */
+            adc_conv_timer = 0;
         }
     }
 

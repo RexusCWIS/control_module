@@ -21,4 +21,6 @@ struct PIControlData {
     }
 };
 
+Q_DECLARE_METATYPE(PIControlData);
+
 #endif  /* DEF_PICONTROLDATA_H */

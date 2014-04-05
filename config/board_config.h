@@ -31,9 +31,9 @@
 #define HEATER  CCPR1L // Heater command output (PWM)
 
 /** @brief Temperature control setpoint. */
-#define TEMPERATURE_CONTROL_SETPOINT    0x273u // 40°C
+#define TEMPERATURE_CONTROL_SETPOINT    731 // 40°C
 /** @brief Temperature control proportional gain. */
-#define TEMPERATURE_CONTROL_PGAIN    10u
+#define TEMPERATURE_CONTROL_PGAIN    30u
 
 /* TMR0 (1ms tick) reload values */
 #define T0_RELOAD_HIGH 0xEC //( last 0xFDu)
@@ -50,7 +50,7 @@
 #define RFH_HEATER  5           //Timer for refresh heater power (default X)
 #define RFH_ADC     100         //Timer for refresh ADC (default 100)
 #define DEBOUNCE_TIME    50     //Timer for debounce system (default 50)
-#define TIME_ACQUISITION_OFF    140000  //Timer for stop the camera acquisition (default 140000)
+#define TIME_ACQUISITION_OFF    100000  //Timer for stop the camera acquisition (default 140000)
 
 
 /**

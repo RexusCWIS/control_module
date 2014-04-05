@@ -31,9 +31,10 @@ typedef enum {
 #define STATUS_POWER_ON     (1 << 0)
 #define STATUS_LASER_ON     (1 << 1)
 #define STATUS_CAMERA_ON    (1 << 2)
-#define STATUS_LO           (1 << 3)
-#define STATUS_SODS         (1 << 4)
-#define STATUS_SOE          (1 << 5)
+#define STATUS_HEATER_ON    (1 << 3)
+#define STATUS_LO           (1 << 4)
+#define STATUS_SODS         (1 << 5)
+#define STATUS_SOE          (1 << 6)
 
 /**
  * @brief I2C data frame.
@@ -45,7 +46,8 @@ typedef struct {
     uint32_t time;                      /**< @brief Time at which data acquisition occured. */
     uint16_t temperatures[3];           /**< @brief Temperature sensors data. */
     uint16_t pressure;                  /**< @brief Pressure sensor data. */
-    uint8_t status[2];                  /**< @brief Control module status. */
+    uint8_t heating;
+    uint8_t status;                     /**< @brief Control module status. */
 } i2c_frame_s;
 
 typedef struct {

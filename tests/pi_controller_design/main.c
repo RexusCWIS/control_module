@@ -29,7 +29,8 @@ static uint8_t  serial_tx_is_idle  = 1;
 
 static uint32_t system_time = 0;
 
-static uint8_t adc_conv_flag = 0;
+static uint8_t adc_conv_timer = 0;
+static uint8_t adc_conv_flag  = 0;
 
 void main(void) {
 
@@ -70,12 +71,12 @@ void main(void) {
             tx_data.voltage = CCPR1L;
 
             /* CRC computation */
-            crc16 = crc((uint8_t *) & tx_data, (sizeof (serial_frame_s) - 2u));
+            crc16 = crc((uint8_t *) &tx_data, (sizeof(serial_frame_s) - 2u));
             tx_data.crc[0] = (uint8_t) (crc16 >> 8u);
             tx_data.crc[1] = (uint8_t) (crc16 & 0xFFu);
 
             /* Frame transmission */
-            uart_send_data((uint8_t *) &tx_data, sizeof (serial_frame_s));
+            uart_send_data((uint8_t *) &tx_data, sizeof(serial_frame_s));
 
             if(adc_conv_flag) {
                 tx_data.status |= STATUS_OUT_OF_SYNC;
@@ -94,9 +95,14 @@ void interrupt isr(void) {
         TMR0H = T0_RELOAD_HIGH;
         TMR0L = T0_RELOAD_LOW;
 
-        adc_conv_flag = 1;
-
         system_time++; /* Global time */
+        adc_conv_timer++;
+
+        if(adc_conv_timer == 100) {
+
+            adc_conv_flag  = 1;
+            adc_conv_timer = 0;
+        }
     }
 
     if(INTCON3bits.INT1F) {

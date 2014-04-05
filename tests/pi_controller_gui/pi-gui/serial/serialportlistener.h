@@ -199,6 +199,7 @@ protected:
     /** @brief Number of stop bits per received byte. */
     QSerialPort::StopBits m_stopBits;
 
+    int m_validFrames;
     /** @brief Number of frames containing an error detected by CRC computation. */
     int m_invalidFrames;
 
