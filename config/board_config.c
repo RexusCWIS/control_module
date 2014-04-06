@@ -83,10 +83,11 @@ void board_config(void) {
     ADCON2 = 0b10110101; // Set bits right shifted, acquisition time 16 Tad = 64us, conversion clock Fosc/16 = 4us (default 100 Fosc/4)
 
     //Setup PWM1 e PWM2 modules  //
-    CCP1CON = 0b00001100;   //Set CCP1 as PWM module
     PR2 = 0b11111111;   //Set PWM oscillator frequency at 39,06kHz
-    CCPR1L = 0;         //Set dutycicle to 0%
-    T2CON = 0b100;      //Set TMR2 prescaler to 1
+    CCPR1L = 0;         //Set duty cycle to 0%
+    TRISCbits.RC2 = 0;
+    T2CON = 0b100;          //Set TMR2 prescaler to 1
+    CCP1CON = 0b00001100;   //Set CCP1 as PWM module
 
     // Interrupt setup //
     IPEN = 0;   // Interrupt no properties

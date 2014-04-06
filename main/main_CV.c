@@ -44,7 +44,7 @@ static uint8_t dummy = 0;
                                                 } while(0)
 
 /** @brief Returns the distance between the tail and head of a circular buffer. */
-#define CIRCULAR_BUF_INDEX_DISTANCE(head, tail, size)   ((tail > head) ?    \
+#define CIRCULAR_BUF_INDEX_DISTANCE(head, tail, size)   ((tail >= head) ?   \
                                                         (tail - head) :     \
                                                         (tail + size - head))
 
@@ -279,50 +279,48 @@ void main(void) {
         }
 
         /* Handle uplink commands */
-        if(serial_rx_buf_head != serial_rx_buf_tail) {
+        switch(current_uplink_command) {
+            case UPLINK_HEATER:
+                uplink_heater_handler();
+                current_uplink_command = UPLINK_NONE;
+                break;
 
-            switch(current_uplink_command) {
-                case UPLINK_HEATER:
+            case UPLINK_RXSM:
+                uplink_rxsm_handler();
+                current_uplink_command = UPLINK_NONE;
+                break;
 
-                    
-                    break;
-                    
-                case UPLINK_RXSM:
+            case UPLINK_CAMERA:
+                current_uplink_command = UPLINK_NONE;
+                break;
 
-                    break;
+            case UPLINK_CONFIG:
+                current_uplink_command = UPLINK_NONE;
+                break;
 
-                case UPLINK_CAMERA:
+            /* Uplink command and options definition */
+            case UPLINK_NONE:
+                if(CIRCULAR_BUF_INDEX_DISTANCE(serial_rx_buf_head,
+                                               serial_rx_buf_tail,
+                                               SERIAL_RX_BUF_SIZE)
+                        > UPLINK_COMMAND_SIZE) {
 
-                    break;
+                    current_uplink_command = serial_rx_buf[serial_rx_buf_head];
+                    CIRCULAR_BUF_INDEX_INCR(serial_rx_buf_head, SERIAL_RX_BUF_SIZE);
 
-                case UPLINK_CONFIG:
-
-                    break;
-
-                /* Uplink command and options definition */
-                case UPLINK_NONE:
-                    if(CIRCULAR_BUF_INDEX_DISTANCE(serial_rx_buf_head,
-                                                   serial_rx_buf_tail,
-                                                   SERIAL_RX_BUF_SIZE)
-                            > UPLINK_COMMAND_SIZE) {
-                        
-                        current_uplink_command = serial_rx_buf[serial_rx_buf_head];
-                        CIRCULAR_BUF_INDEX_INCR(serial_rx_buf_head, SERIAL_RX_BUF_SIZE);
-                    
-                        /* Get all uplink command options */
-                        uint8_t index;
-                        for(index = 0; index < UPLINK_COMMAND_SIZE; index++) {
-                            uplink_options[index] = serial_rx_buf[serial_rx_buf_head];
-                            CIRCULAR_BUF_INDEX_INCR(serial_rx_buf_head,
-                                                    SERIAL_RX_BUF_SIZE);
-                        }
+                    /* Get all uplink command options */
+                    uint8_t index;
+                    for(index = 0; index < UPLINK_COMMAND_SIZE; index++) {
+                        uplink_options[index] = serial_rx_buf[serial_rx_buf_head];
+                        CIRCULAR_BUF_INDEX_INCR(serial_rx_buf_head,
+                                                SERIAL_RX_BUF_SIZE);
                     }
-                    
-                    break;
-                    
-                default:
-                    current_uplink_command = UPLINK_NONE;
-            }
+                }
+
+                break;
+
+            default:
+                current_uplink_command = UPLINK_NONE;
         }
     }
 }
@@ -474,7 +472,8 @@ void interrupt isr(void)
 
         /* Increment buffer tail index and check for overflow */
         CIRCULAR_BUF_INDEX_INCR(serial_rx_buf_tail, SERIAL_RX_BUF_SIZE);
-        serial_rx_buf_tail++;
+        
+        PIR1bits.RCIF = 0;
     }
 }
 
