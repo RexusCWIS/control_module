@@ -16,6 +16,11 @@
 #define SOE_DEBOUNCED_STATE     (1 << 6)
 
 typedef enum {
+    CONTROL_MANUAL    = 0,
+    CONTROL_AUTOMATIC = 0xFF
+} module_control_mode_e;
+
+typedef enum {
     BOOT = 0,
     LO   = 1,
     SODS = 2,

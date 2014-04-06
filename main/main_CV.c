@@ -21,6 +21,9 @@
 /** @brief Global system time. */
 static uint32_t system_time;
 
+static module_control_mode_e control_mode = CONTROL_AUTOMATIC;
+static experiment_state_e current_experiment_state = BOOT;
+
 /** @brief Status flags stored in EEPROM at the end of each run. */
 static uint8_t eeprom_flags = 0;
 
@@ -41,10 +44,17 @@ static uint8_t dummy = 0;
                                                 } while(0)
 
 /** @brief Returns the distance between the tail and head of a circular buffer. */
-#define CIRCULAR_BUF_INDEX_DISTANCE(head, tail, size)   (tail > head) ?     \
+#define CIRCULAR_BUF_INDEX_DISTANCE(head, tail, size)   ((tail > head) ?    \
                                                         (tail - head) :     \
-                                                        (tail + size - head)
+                                                        (tail + size - head))
 
+
+void lo_signal_handler(void);
+void sods_signal_handler(void);
+void soe_signal_handler(void);
+
+void uplink_heater_handler(void);
+void uplink_rxsm_handler(void);
 
 /** @brief Downlink data frame. */
 static serial_frame_s dl_data = {{'U', 'U'}, {0, {0, 0, 0}, 0, 0, 0},
@@ -65,6 +75,7 @@ static uint8_t serial_rx_buf[SERIAL_RX_BUF_SIZE];
 static uint8_t serial_rx_buf_head = 0;
 static uint8_t serial_rx_buf_tail = 0;
 static uplink_command_e current_uplink_command = UPLINK_NONE;
+static uint8_t uplink_options[UPLINK_COMMAND_SIZE];
 
 /* I2C variables */
 
@@ -110,8 +121,6 @@ void uart_send_data(uint8_t data[], uint8_t size);
 void main(void) {
 
     uint16_t crc16 = 0;
-
-    experiment_state_e current_experiment_state = BOOT;
 
     dl_data.sync[0] = 'U';
     dl_data.sync[1] = 'U';
@@ -176,7 +185,8 @@ void main(void) {
             uart_send_data(&dl_data, sizeof(serial_frame_s));
 
             /* Heater control loop */
-            if (current_experiment_state == SOE) {
+            if ((current_experiment_state == SOE) &&
+                    (control_mode == CONTROL_AUTOMATIC)) {
 
                 /* Compute the error between the setpoint and the actual temperature */
                 heater_power = TEMPERATURE_CONTROL_SETPOINT - (int16_t) dl_data.acquired_data.temperatures[0];
@@ -193,7 +203,7 @@ void main(void) {
         if((RXSM_LO && !(debounce_flags & LO_DEBOUNCED_STATE)) ||
            !(RXSM_LO) && (debounce_flags & LO_DEBOUNCED_STATE)) {
 
-            if(!debounce_flags & LO_DEBOUNCE_REQUEST) {
+            if(!(debounce_flags & LO_DEBOUNCE_REQUEST)) {
 
                 lo_debounce_time = system_time;
                 debounce_flags  |= LO_DEBOUNCE_REQUEST;
@@ -205,7 +215,7 @@ void main(void) {
             }
         }
 
-        else if(debounce_flags & LO_DEBOUNCE_REQUEST) {
+        else if((debounce_flags & LO_DEBOUNCE_REQUEST)) {
             debounce_flags &= ~LO_DEBOUNCE_REQUEST;
         }
 
@@ -255,37 +265,17 @@ void main(void) {
 
         /* LO signal */
         if ((debounce_flags & LO_DEBOUNCED_STATE) && (current_experiment_state == BOOT)) {
-
-            /* LO commands */
-            laser_timer = system_time + TIME_LASER_ON; /* Set time for laser on */
-            current_experiment_state = LO;
-            dl_data.acquired_data.status |= STATUS_LO;
-            LO_LED = 1;
+            lo_signal_handler();
         }
 
         /* SODS signal */
         if ((debounce_flags & SODS_DEBOUNCED_STATE) && (current_experiment_state == LO)) {
-
-            /* SODS commands */
-            camera_order = START_ACQUISITION; /* Camera start acquisition */
-            acquisition_timer = system_time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
-
-            current_experiment_state = SODS;
-            dl_data.acquired_data.status |= STATUS_SODS;
-            LO_LED = 0;
-            SODS_LED = 1;
+            sods_signal_handler();
         }
 
         /* SOE signal */
         if ((debounce_flags & SOE_DEBOUNCED_STATE) && (current_experiment_state == SODS)) {
-
-            /* SOE commands */
-            heater_timer = system_time + TIME_HEATER_OFF; /* Set time for heater off */
-
-            current_experiment_state = SOE;
-            dl_data.acquired_data.status |= (STATUS_SOE | STATUS_HEATER_ON);
-            SODS_LED = 0;
-            SOE_LED = 1;
+            soe_signal_handler();
         }
 
         /* Handle uplink commands */
@@ -293,44 +283,43 @@ void main(void) {
 
             switch(current_uplink_command) {
                 case UPLINK_HEATER:
-                    if(CIRCULAR_BUF_INDEX_DISTANCE(serial_rx_buf_head,
-                                                   serial_rx_buf_tail,
-                                                   SERIAL_RX_BUF_SIZE)
-                            >= UPLINK_COMMAND_SIZE) {
-                        
-                    }
+
+                    
                     break;
                     
                 case UPLINK_RXSM:
-                    if(CIRCULAR_BUF_INDEX_DISTANCE(serial_rx_buf_head,
-                                                   serial_rx_buf_tail,
-                                                   SERIAL_RX_BUF_SIZE)
-                            >= UPLINK_COMMAND_SIZE) {
 
-                    }
                     break;
+
                 case UPLINK_CAMERA:
-                    if(CIRCULAR_BUF_INDEX_DISTANCE(serial_rx_buf_head,
-                                                   serial_rx_buf_tail,
-                                                   SERIAL_RX_BUF_SIZE)
-                            >= UPLINK_COMMAND_SIZE) {
 
-                    }
                     break;
+
                 case UPLINK_CONFIG:
+
+                    break;
+
+                /* Uplink command and options definition */
+                case UPLINK_NONE:
                     if(CIRCULAR_BUF_INDEX_DISTANCE(serial_rx_buf_head,
                                                    serial_rx_buf_tail,
                                                    SERIAL_RX_BUF_SIZE)
-                            >= UPLINK_COMMAND_SIZE) {
-
+                            > UPLINK_COMMAND_SIZE) {
+                        
+                        current_uplink_command = serial_rx_buf[serial_rx_buf_head];
+                        CIRCULAR_BUF_INDEX_INCR(serial_rx_buf_head, SERIAL_RX_BUF_SIZE);
+                    
+                        /* Get all uplink command options */
+                        uint8_t index;
+                        for(index = 0; index < UPLINK_COMMAND_SIZE; index++) {
+                            uplink_options[index] = serial_rx_buf[serial_rx_buf_head];
+                            CIRCULAR_BUF_INDEX_INCR(serial_rx_buf_head,
+                                                    SERIAL_RX_BUF_SIZE);
+                        }
                     }
+                    
                     break;
-
-                /* Uplink command definition */
-                case UPLINK_NONE:
-                    current_uplink_command = serial_rx_buf[serial_rx_buf_head];
-                    CIRCULAR_BUF_INDEX_INCR(serial_rx_buf_head, SERIAL_RX_BUF_SIZE);
-                    break;
+                    
                 default:
                     current_uplink_command = UPLINK_NONE;
             }
@@ -517,4 +506,47 @@ void uart_send_data(uint8_t data[], uint8_t size) {
     }
     
     PIE1bits.TXIE = 1;
+}
+
+void uplink_heater_handler(void) {
+
+    control_mode = CONTROL_MANUAL;
+    HEATER = uplink_options[0];
+}
+
+void uplink_rxsm_handler(void) {
+
+    
+}
+
+void lo_signal_handler(void) {
+
+    /* LO commands */
+    laser_timer = system_time + TIME_LASER_ON; /* Set time for laser on */
+    current_experiment_state = LO;
+    dl_data.acquired_data.status |= STATUS_LO;
+    LO_LED = 1;
+}
+
+void sods_signal_handler(void) {
+
+    /* SODS commands */
+    camera_order = START_ACQUISITION;                       /* Camera start acquisition */
+    acquisition_timer = system_time + TIME_ACQUISITION_OFF; /* Set time for stop acquisition */
+
+    current_experiment_state = SODS;
+    dl_data.acquired_data.status |= STATUS_SODS;
+    LO_LED = 0;
+    SODS_LED = 1;
+}
+
+void soe_signal_handler(void) {
+    
+    /* SOE commands */
+    heater_timer = system_time + TIME_HEATER_OFF; /* Set time for heater off */
+
+    current_experiment_state = SOE;
+    dl_data.acquired_data.status |= (STATUS_SOE | STATUS_HEATER_ON);
+    SODS_LED = 0;
+    SOE_LED = 1;
 }
