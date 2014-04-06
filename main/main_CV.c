@@ -32,6 +32,20 @@ static uint8_t dummy = 0;
 
 /* UART variables */
 
+/** @brief Increments an index of a circular buffer with overflow control. */
+#define CIRCULAR_BUF_INDEX_INCR(index, size)    do {                        \
+                                                    index++;                \
+                                                    if(index == size) {     \
+                                                        index = 0;          \
+                                                    }                       \
+                                                } while(0)
+
+/** @brief Returns the distance between the tail and head of a circular buffer. */
+#define CIRCULAR_BUF_INDEX_DISTANCE(head, tail, size)   (tail > head) ?     \
+                                                        (tail - head) :     \
+                                                        (tail + size - head)
+
+
 /** @brief Downlink data frame. */
 static serial_frame_s dl_data = {{'U', 'U'}, {0, {0, 0, 0}, 0, 0, 0},
                                 {0, 0, 0}, {0, 0}, {0, 0}};
@@ -50,6 +64,7 @@ static uint8_t serial_rx_buf[SERIAL_RX_BUF_SIZE];
 /** @brief Serial RX ISR increment variables. */
 static uint8_t serial_rx_buf_head = 0;
 static uint8_t serial_rx_buf_tail = 0;
+static uplink_command_e current_uplink_command = UPLINK_NONE;
 
 /* I2C variables */
 
@@ -275,7 +290,50 @@ void main(void) {
 
         /* Handle uplink commands */
         if(serial_rx_buf_head != serial_rx_buf_tail) {
-            serial_rx_buf_head++;
+
+            switch(current_uplink_command) {
+                case UPLINK_HEATER:
+                    if(CIRCULAR_BUF_INDEX_DISTANCE(serial_rx_buf_head,
+                                                   serial_rx_buf_tail,
+                                                   SERIAL_RX_BUF_SIZE)
+                            >= UPLINK_COMMAND_SIZE) {
+                        
+                    }
+                    break;
+                    
+                case UPLINK_RXSM:
+                    if(CIRCULAR_BUF_INDEX_DISTANCE(serial_rx_buf_head,
+                                                   serial_rx_buf_tail,
+                                                   SERIAL_RX_BUF_SIZE)
+                            >= UPLINK_COMMAND_SIZE) {
+
+                    }
+                    break;
+                case UPLINK_CAMERA:
+                    if(CIRCULAR_BUF_INDEX_DISTANCE(serial_rx_buf_head,
+                                                   serial_rx_buf_tail,
+                                                   SERIAL_RX_BUF_SIZE)
+                            >= UPLINK_COMMAND_SIZE) {
+
+                    }
+                    break;
+                case UPLINK_CONFIG:
+                    if(CIRCULAR_BUF_INDEX_DISTANCE(serial_rx_buf_head,
+                                                   serial_rx_buf_tail,
+                                                   SERIAL_RX_BUF_SIZE)
+                            >= UPLINK_COMMAND_SIZE) {
+
+                    }
+                    break;
+
+                /* Uplink command definition */
+                case UPLINK_NONE:
+                    current_uplink_command = serial_rx_buf[serial_rx_buf_head];
+                    CIRCULAR_BUF_INDEX_INCR(serial_rx_buf_head, SERIAL_RX_BUF_SIZE);
+                    break;
+                default:
+                    current_uplink_command = UPLINK_NONE;
+            }
         }
     }
 }
@@ -426,10 +484,8 @@ void interrupt isr(void)
         serial_rx_buf[serial_rx_buf_tail] = RCREG;
 
         /* Increment buffer tail index and check for overflow */
+        CIRCULAR_BUF_INDEX_INCR(serial_rx_buf_tail, SERIAL_RX_BUF_SIZE);
         serial_rx_buf_tail++;
-        if(serial_rx_buf_tail == SERIAL_RX_BUF_SIZE) {
-            serial_rx_buf_tail = 0;
-        }
     }
 }
 

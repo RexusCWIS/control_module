@@ -62,7 +62,21 @@ typedef struct {
     i2c_camera_data_s camera_data;
     uint8_t checksum[2];
     uint8_t crc[2];
-} serial_frame_s; 
+} serial_frame_s;
+
+/**
+ * @brief Recognized uplink command bytes.
+ */
+typedef enum {
+    UPLINK_NONE   = 0xAAu,
+    UPLINK_HEATER = 0x00u,
+    UPLINK_RXSM   = 0x0Fu,
+    UPLINK_CAMERA = 0xF0u,
+    UPLINK_CONFIG = 0xFFu
+} uplink_command_e;
+
+/** @brief Length of the uplink RX data frame (without the command byte). */
+#define UPLINK_COMMAND_SIZE 3u
 
 #endif  /* DEF_TYPES_H */
 
