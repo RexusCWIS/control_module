@@ -516,7 +516,22 @@ void uplink_heater_handler(void) {
 
 void uplink_rxsm_handler(void) {
 
-    
+    switch(uplink_options[0]) {
+        case 0x01u:
+            lo_signal_handler();
+        break;
+
+        case 0x3u:
+            sods_signal_handler();
+            break;
+
+        case 0x5u:
+            soe_signal_handler();
+            break;
+
+        default:
+            break;
+    }
 }
 
 void lo_signal_handler(void) {
