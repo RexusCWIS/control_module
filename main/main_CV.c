@@ -544,7 +544,14 @@ void uplink_rxsm_handler(void) {
 }
 
 void uplink_camera_handler(void) {
-    
+
+    if(uplink_options[0]) {
+        camera_order = START_ACQUISITION;
+    }
+
+    else {
+        camera_order = STOP_ACQUISITION;
+    }
 }
 
 void uplink_config_handler(void) {
