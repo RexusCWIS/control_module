@@ -18,6 +18,17 @@
 #include "drivers/i2c_slave.h"
 #include "libs/crc.h"
 
+void load_eeprom_data(void);
+
+void lo_signal_handler(void);
+void sods_signal_handler(void);
+void soe_signal_handler(void);
+
+void uplink_heater_handler(void);
+void uplink_rxsm_handler(void);
+void uplink_camera_handler(void);
+void uplink_config_handler(void);
+
 /** @brief Global system time. */
 static uint32_t system_time;
 
@@ -28,7 +39,10 @@ static experiment_state_e current_experiment_state = BOOT;
 static uint8_t eeprom_flags = 0;
 
 /* Control loop variables */
-int heater_power = 0; 
+static int heater_power = 0;
+static uint8_t control_pgain = TEMPERATURE_CONTROL_PGAIN;
+static uint8_t control_igain = TEMPERATURE_CONTROL_IGAIN;
+
 
 /** @brief Dummy 8-bit variable, used to empty serial buffers. */
 static uint8_t dummy = 0;
@@ -49,12 +63,6 @@ static uint8_t dummy = 0;
                                                         (tail + size - head))
 
 
-void lo_signal_handler(void);
-void sods_signal_handler(void);
-void soe_signal_handler(void);
-
-void uplink_heater_handler(void);
-void uplink_rxsm_handler(void);
 
 /** @brief Downlink data frame. */
 static serial_frame_s dl_data = {{'U', 'U'}, {0, {0, 0, 0}, 0, 0, 0},
@@ -129,7 +137,7 @@ void main(void) {
     board_config(); /* Register Init */
     i2c_slave_init(I2C_ADDRESS); /* I2C Init */
 
-    eeprom_flags = eeprom_read_byte(EEPROM_FLAGS_ADDR);
+    load_eeprom_data();
 
     uart_send_data(boot_msg, sizeof(boot_msg)); 
 
@@ -291,10 +299,12 @@ void main(void) {
                 break;
 
             case UPLINK_CAMERA:
+                uplink_camera_handler();
                 current_uplink_command = UPLINK_NONE;
                 break;
 
             case UPLINK_CONFIG:
+                uplink_config_handler();
                 current_uplink_command = UPLINK_NONE;
                 break;
 
@@ -531,6 +541,40 @@ void uplink_rxsm_handler(void) {
         default:
             break;
     }
+}
+
+void uplink_camera_handler(void) {
+    
+}
+
+void uplink_config_handler(void) {
+
+    switch(uplink_options[0]) {
+        
+        /* PI control parameters */
+        case 0x00u:
+            eeprom_write_byte(uplink_options[1], EEPROM_PGAIN_ADDR);
+            eeprom_write_byte(uplink_options[2], EEPROM_IGAIN_ADDR);
+            break;
+            
+        default:
+            break;
+    }
+}
+
+void load_eeprom_data(void) {
+
+    uint8_t rvalue = eeprom_read_byte(EEPROM_PGAIN_ADDR);
+    if(rvalue != 0) {
+        control_pgain = rvalue;
+    }
+
+    rvalue = eeprom_read_byte(EEPROM_IGAIN_ADDR);
+    if(rvalue != 0) {
+        control_igain = rvalue;
+    }
+
+    eeprom_flags = eeprom_read_byte(EEPROM_FLAGS_ADDR);
 }
 
 void lo_signal_handler(void) {

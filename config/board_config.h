@@ -8,6 +8,10 @@
 
 #include <htc.h>
 
+#define EEPROM_PGAIN_ADDR           0x00u
+#define EEPROM_IGAIN_ADDR           0x01u
+#define EEPROM_TEMP_SETPOINT_ADDR   0x02u
+
 #define EEPROM_FLAGS_ADDR   0x42u
 #define EEPROM_FLAGS_EODS   (1 << 0)
 
@@ -33,7 +37,9 @@
 /** @brief Temperature control setpoint. */
 #define TEMPERATURE_CONTROL_SETPOINT    731 // 40°C
 /** @brief Temperature control proportional gain. */
-#define TEMPERATURE_CONTROL_PGAIN    30u
+#define TEMPERATURE_CONTROL_PGAIN   30u
+/** @brief Temperature control integral gain. */
+#define TEMPERATURE_CONTROL_IGAIN   0u
 
 /* TMR0 (1ms tick) reload values */
 #define T0_RELOAD_HIGH 0xEC //( last 0xFDu)
