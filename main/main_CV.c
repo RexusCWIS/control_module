@@ -35,12 +35,21 @@ static uint8_t dummy = 0;
 /** @brief Downlink data frame. */
 static serial_frame_s dl_data = {{'U', 'U'}, {0, {0, 0, 0}, 0, 0, 0},
                                 {0, 0, 0}, {0, 0}, {0, 0}};
-/** @brief Serial line circular buffer. */
+/** @brief Serial line TX circular buffer. */
 static uint8_t serial_tx_buf[16*sizeof(serial_frame_s)];
 /** @brief Serial TX ISR increment variable. */
 static uint16_t serial_tx_buf_head = 0;
 static uint16_t serial_tx_buf_tail = 0;
 static uint8_t  serial_tx_is_idle  = 1;
+
+/** @brief Serial line RX circular buffer size. */
+#define SERIAL_RX_BUF_SIZE  128
+/** @brief Serial line RX circular buffer. */
+static uint8_t serial_rx_buf[SERIAL_RX_BUF_SIZE];
+
+/** @brief Serial RX ISR increment variables. */
+static uint8_t serial_rx_buf_head = 0;
+static uint8_t serial_rx_buf_tail = 0;
 
 /* I2C variables */
 
@@ -263,6 +272,11 @@ void main(void) {
             SODS_LED = 0;
             SOE_LED = 1;
         }
+
+        /* Handle uplink commands */
+        if(serial_rx_buf_head != serial_rx_buf_tail) {
+            serial_rx_buf_head++;
+        }
     }
 }
 
@@ -404,6 +418,18 @@ void interrupt isr(void)
         }
 
         PIR1bits.TXIF = 0;
+    }
+
+    if(PIR1bits.RCIF) {
+
+        /* Record received byte */
+        serial_rx_buf[serial_rx_buf_tail] = RCREG;
+
+        /* Increment buffer tail index and check for overflow */
+        serial_rx_buf_tail++;
+        if(serial_rx_buf_tail == SERIAL_RX_BUF_SIZE) {
+            serial_rx_buf_tail = 0;
+        }
     }
 }
 
