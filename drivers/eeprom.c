@@ -43,3 +43,18 @@ void eeprom_write_byte(uint8_t data, uint8_t address) {
     PIR2bits.EEIF   = 0;
     EECON1bits.WREN = 0;
 }
+
+void eeprom_read_array(uint8_t data[], uint8_t size, uint8_t address) {
+
+    for(uint8_t index = 0; index < size; index++) {
+        data[index] = eeprom_read_byte(address + index);
+    }
+}
+
+
+void eeprom_write_array(uint8_t data[], uint8_t size, uint8_t address) {
+
+    for(uint8_t index = 0; index < size; index++) {
+        eeprom_write_byte(data[index], address + index);
+    }
+}

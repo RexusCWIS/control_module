@@ -9,8 +9,8 @@
 #include <htc.h>
 
 #define EEPROM_PGAIN_ADDR           0x00u
-#define EEPROM_IGAIN_ADDR           0x01u
-#define EEPROM_TEMP_SETPOINT_ADDR   0x02u
+#define EEPROM_DTI_ADDR             0x04u
+#define EEPROM_TEMP_SETPOINT_ADDR   0x08u
 
 #define EEPROM_FLAGS_ADDR   0x42u
 #define EEPROM_FLAGS_EODS   (1 << 0)
@@ -34,12 +34,16 @@
 #define LASER_CONTROL   LATBbits.LATB4   /* Laser command output */
 #define HEATER  CCPR1L // Heater command output (PWM)
 
-/** @brief Temperature control setpoint. */
-#define TEMPERATURE_CONTROL_SETPOINT    731 // 40°C
+/** @brief Temperature control step at SOE (10 °C). */
+#define TEMPERATURE_CONTROL_STEP    147
 /** @brief Temperature control proportional gain. */
-#define TEMPERATURE_CONTROL_PGAIN   30u
+#define TEMPERATURE_CONTROL_PGAIN   0x28000u
+/** @brief Temperature control output saturation (lower). */
+#define TEMPERATURE_CONTROL_LOWER_SAT   0x0
+/** @brief Temperature control output saturation (upper). */
+#define TEMPERATURE_CONTROL_UPPER_SAT   0x3FC000
 /** @brief Temperature control integral gain. */
-#define TEMPERATURE_CONTROL_IGAIN   0u
+#define TEMPERATURE_CONTROL_DTI     0x52u
 
 /* TMR0 (1ms tick) reload values */
 #define T0_RELOAD_HIGH 0xEC //( last 0xFDu)
@@ -52,7 +56,7 @@
 
 /* 1 unit = 1ms */
 #define TIME_LASER_ON    5000   // Timer for Laser Power On after LO (default 5000)
-#define TIME_HEATER_OFF  20000  //Timer for Heater Power Off after predefined time (default 15000)
+#define TIME_POWER_OFF   232000 //Timer for Heater Power Off after predefined time (default 15000)
 #define RFH_HEATER  5           //Timer for refresh heater power (default X)
 #define RFH_ADC     100         //Timer for refresh ADC (default 100)
 #define DEBOUNCE_TIME    50     //Timer for debounce system (default 50)

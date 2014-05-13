@@ -32,5 +32,8 @@ uint8_t eeprom_read_byte(uint8_t address);
  */
 void eeprom_write_byte(uint8_t data, uint8_t address);
 
+void eeprom_read_array(uint8_t data[], uint8_t size, uint8_t address);
+void eeprom_write_array(uint8_t data[], uint8_t size, uint8_t address);
+
 #endif /* DEF_EEPROM_H */
         

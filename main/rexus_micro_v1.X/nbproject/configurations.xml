@@ -10,6 +10,7 @@
       <itemPath>../../config/board_config.h</itemPath>
       <itemPath>../../drivers/types.h</itemPath>
       <itemPath>../../drivers/eeprom.h</itemPath>
+      <itemPath>../../libs/controller.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"

@@ -1,7 +1,7 @@
-/*-------- REXUS Project -------*\
-|*-----CWIS Microcontroller-----*|
-|*----------PIC18F2520----------*|
-\*-Fabrizio Mancino - Gen. 2013-*/
+/**
+ * @file main_CV.c
+ * @brief CWIS data control module.
+ */
 
 #include <stdint.h>
 
@@ -16,6 +16,8 @@
 
 #include "drivers/eeprom.h"
 #include "drivers/i2c_slave.h"
+
+#include "libs/controller.h"
 #include "libs/crc.h"
 
 void load_eeprom_data(void);
@@ -23,6 +25,7 @@ void load_eeprom_data(void);
 void lo_signal_handler(void);
 void sods_signal_handler(void);
 void soe_signal_handler(void);
+void power_off_handler(void);
 
 void uplink_heater_handler(void);
 void uplink_rxsm_handler(void);
@@ -40,8 +43,9 @@ static uint8_t eeprom_flags = 0;
 
 /* Control loop variables */
 static int heater_power = 0;
-static uint8_t control_pgain = TEMPERATURE_CONTROL_PGAIN;
-static uint8_t control_igain = TEMPERATURE_CONTROL_IGAIN;
+static uint32_t control_pgain = TEMPERATURE_CONTROL_PGAIN;
+static uint32_t control_dti = TEMPERATURE_CONTROL_DTI;
+static uint32_t control_setpoint = 0;
 
 
 /** @brief Dummy 8-bit variable, used to empty serial buffers. */
@@ -117,7 +121,7 @@ static unsigned char boot_msg[68]  = "\n\rThis is the CWIS control module. Start
  */
 static void timer_init(void);
 
-static uint32_t laser_timer = 0, heater_timer = 0, debounce_timer = 0,
+static uint32_t power_timer, debounce_timer = 0,
                 acquisition_timer = 0;
 
 static uint8_t  debounce_flags = 0, adc_conv_flag = 0, adc_conv_timer = 0;
@@ -139,6 +143,11 @@ void main(void) {
 
     load_eeprom_data();
 
+    pi_controller_s pi_controller;
+    init_pi_controller(&pi_controller, control_pgain, control_dti, 
+                       TEMPERATURE_CONTROL_LOWER_SAT,
+                       TEMPERATURE_CONTROL_UPPER_SAT);
+
     uart_send_data(boot_msg, sizeof(boot_msg)); 
 
 
@@ -159,28 +168,36 @@ void main(void) {
             ADC_CONVERSION = 1;
             while (ADC_CONVERSION)
                 ;
+            di();
             dl_data.acquired_data.temperatures[0] = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+            ei();
 
             /* Measure heater temperature */
             ADCON0 = TEMPERATURE_SENSOR2;
             ADC_CONVERSION = 1;
             while (ADC_CONVERSION)
                 ;
+            di();
             dl_data.acquired_data.temperatures[1] = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+            ei();
 
             /* Measure ambient temperature */
             ADCON0 = TEMPERATURE_SENSOR3;
             ADC_CONVERSION = 1;
             while (ADC_CONVERSION)
                 ;
+            di();
             dl_data.acquired_data.temperatures[2] = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+            ei();
 
             /* Measure ambient pressure */
             ADCON0 = PRESSURE_SENSOR;
             ADC_CONVERSION = 1;
             while (ADC_CONVERSION)
                 ;
+            di();
             dl_data.acquired_data.pressure = (((uint16_t) ADRESH) << 8) + (uint16_t) ADRESL;
+            ei();
 
             dl_data.acquired_data.heating = HEATER;
 
@@ -193,17 +210,19 @@ void main(void) {
             uart_send_data(&dl_data, sizeof(serial_frame_s));
 
             /* Heater control loop */
-            if ((current_experiment_state == SOE) &&
-                    (control_mode == CONTROL_AUTOMATIC)) {
+            if(control_mode == CONTROL_AUTOMATIC) {
+                if (dl_data.acquired_data.status & STATUS_HEATER_ON) {
 
-                /* Compute the error between the setpoint and the actual temperature */
-                heater_power = TEMPERATURE_CONTROL_SETPOINT - (int16_t) dl_data.acquired_data.temperatures[0];
-                /* Multiply it by the proportional gain */
-                heater_power *= TEMPERATURE_CONTROL_PGAIN;
+                    /* Compute the error between the setpoint and the actual temperature */
+                    int32_t error = control_setpoint - (int32_t) dl_data.acquired_data.temperatures[0];
+                    
+                    HEATER = (uint8_t) (pi_control_loop(&pi_controller, error) >> 14);
+                }
 
-                /* Apply system limits (no cooling, 8-bit duty cycle) */
-                heater_power = (heater_power < 0) ? 0 : heater_power;
-                HEATER = (uint8_t) (heater_power & 0xFFu);
+                else {
+                    /* Switch off the heater */
+                    HEATER = 0;
+                }
             }
         }
 
@@ -350,12 +369,6 @@ void interrupt isr(void)
         system_time++; /* Global time */
         adc_conv_timer++;
 
-        /* Timer for laser on */
-        if (system_time == laser_timer) {
-            dl_data.acquired_data.status |= STATUS_LASER_ON; 
-            LASER_CONTROL = 1; /* Laser power on */
-        }
-
         /* Timer for stop the camera acquisition */
         if (system_time == acquisition_timer) {
             camera_order  = STOP_ACQUISITION;
@@ -364,9 +377,8 @@ void interrupt isr(void)
         }
 
         /* Timer for heater off */
-        if (system_time == heater_timer) {
-            HEATER = 0;
-            dl_data.acquired_data.status &= ~STATUS_HEATER_ON;
+        if (system_time == power_timer) {
+            power_off_handler();
         }
 
         /* ADC conversion rate */
@@ -561,7 +573,7 @@ void uplink_config_handler(void) {
         /* PI control parameters */
         case 0x00u:
             eeprom_write_byte(uplink_options[1], EEPROM_PGAIN_ADDR);
-            eeprom_write_byte(uplink_options[2], EEPROM_IGAIN_ADDR);
+            eeprom_write_byte(uplink_options[2], EEPROM_DTI_ADDR);
             break;
             
         default:
@@ -571,15 +583,20 @@ void uplink_config_handler(void) {
 
 void load_eeprom_data(void) {
 
-    uint8_t rvalue = eeprom_read_byte(EEPROM_PGAIN_ADDR);
+    /*
+    uint32_t rvalue = 0;
+
+    eeprom_read_array((uint8_t *) &rvalue, sizeof(uint32_t), EEPROM_PGAIN_ADDR);
+
     if(rvalue != 0) {
         control_pgain = rvalue;
     }
 
-    rvalue = eeprom_read_byte(EEPROM_IGAIN_ADDR);
+    eeprom_read_array((uint8_t *) &rvalue, sizeof(uint32_t), EEPROM_DTI_ADDR);
     if(rvalue != 0) {
-        control_igain = rvalue;
+        control_dti = rvalue;
     }
+    */
 
     eeprom_flags = eeprom_read_byte(EEPROM_FLAGS_ADDR);
 }
@@ -587,9 +604,12 @@ void load_eeprom_data(void) {
 void lo_signal_handler(void) {
 
     /* LO commands */
-    laser_timer = system_time + TIME_LASER_ON; /* Set time for laser on */
+    power_timer = system_time + TIME_POWER_OFF; /* Set time for power-off */
+
+    /* Switch laser on */
     current_experiment_state = LO;
-    dl_data.acquired_data.status |= STATUS_LO;
+    LASER_CONTROL = 1;
+    dl_data.acquired_data.status |= STATUS_LO | STATUS_LASER_ON;
     LO_LED = 1;
 }
 
@@ -606,12 +626,20 @@ void sods_signal_handler(void) {
 }
 
 void soe_signal_handler(void) {
-    
-    /* SOE commands */
-    heater_timer = system_time + TIME_HEATER_OFF; /* Set time for heater off */
+
+    /* Compute the temperature setpoint */
+    control_setpoint = dl_data.acquired_data.temperatures[0] +
+                       TEMPERATURE_CONTROL_STEP;
 
     current_experiment_state = SOE;
     dl_data.acquired_data.status |= (STATUS_SOE | STATUS_HEATER_ON);
     SODS_LED = 0;
     SOE_LED = 1;
+}
+
+void power_off_handler(void) {
+
+    /* Disable laser and heater (the heater is disabled in the main loop) */
+    LASER_CONTROL = 0;
+    dl_data.acquired_data.status &= ~(STATUS_HEATER_ON | STATUS_LASER_ON);
 }
