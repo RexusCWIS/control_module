@@ -37,13 +37,13 @@
 /** @brief Temperature control step at SOE (10 °C). */
 #define TEMPERATURE_CONTROL_STEP    147
 /** @brief Temperature control proportional gain. */
-#define TEMPERATURE_CONTROL_PGAIN   0x28000u
+#define TEMPERATURE_CONTROL_PGAIN   49152u
 /** @brief Temperature control output saturation (lower). */
 #define TEMPERATURE_CONTROL_LOWER_SAT   0x0
 /** @brief Temperature control output saturation (upper). */
 #define TEMPERATURE_CONTROL_UPPER_SAT   0x3FC000
 /** @brief Temperature control integral gain. */
-#define TEMPERATURE_CONTROL_DTI     0x52u
+#define TEMPERATURE_CONTROL_DTI     81u
 
 /* TMR0 (1ms tick) reload values */
 #define T0_RELOAD_HIGH 0xEC //( last 0xFDu)
