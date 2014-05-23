@@ -76,6 +76,7 @@ typedef enum {
     UPLINK_NONE   = 0xAAu,
     UPLINK_HEATER = 0x00u,
     UPLINK_RXSM   = 0x0Fu,
+    UPLINK_LASER  = 0xCCu,
     UPLINK_CAMERA = 0xF0u,
     UPLINK_CONFIG = 0xFFu
 } uplink_command_e;

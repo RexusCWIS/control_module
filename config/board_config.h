@@ -36,6 +36,12 @@
 
 /** @brief Temperature control step at SOE (10 °C). */
 #define TEMPERATURE_CONTROL_STEP    147
+/** @brief Temperature sensor value for 1 Celsius degree. */
+#define TEMPERATURE_ONE_DEGREE      15
+/** @brief Lower temperature range (0 °C). */
+#define TEMPERATURE_RANGE_LOW       146u
+/** @brief Upper temperature range (40 °C). */
+#define TEMPERATURE_RANGE_HIGH      731u
 /** @brief Temperature control proportional gain. */
 #define TEMPERATURE_CONTROL_PGAIN   49152u
 /** @brief Temperature control output saturation (lower). */

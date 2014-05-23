@@ -20,6 +20,9 @@
 #include "libs/controller.h"
 #include "libs/crc.h"
 
+int16_t abs16(int16_t a, int16_t b);
+uint8_t sensor_value_in_range(uint16_t value);
+
 void load_eeprom_data(void);
 
 void lo_signal_handler(void);
@@ -29,6 +32,7 @@ void power_off_handler(void);
 
 void uplink_heater_handler(void);
 void uplink_rxsm_handler(void);
+void uplink_laser_handler(void);
 void uplink_camera_handler(void);
 void uplink_config_handler(void);
 
@@ -40,13 +44,6 @@ static experiment_state_e current_experiment_state = BOOT;
 
 /** @brief Status flags stored in EEPROM at the end of each run. */
 static uint8_t eeprom_flags = 0;
-
-/* Control loop variables */
-static int heater_power = 0;
-static uint32_t control_pgain = TEMPERATURE_CONTROL_PGAIN;
-static uint32_t control_dti = TEMPERATURE_CONTROL_DTI;
-static uint32_t control_setpoint = 0;
-
 
 /** @brief Dummy 8-bit variable, used to empty serial buffers. */
 static uint8_t dummy = 0;
@@ -114,6 +111,15 @@ static i2c_state_machine_e i2c_state;
 
 /** @brief Message displayed at boot. */
 static unsigned char boot_msg[68]  = "\n\rThis is the CWIS control module. Starting functional tests...\n\r\n\r\0";
+
+/* Control loop variables */
+
+static int heater_power = 0;
+static uint32_t control_pgain = TEMPERATURE_CONTROL_PGAIN;
+static uint32_t control_dti = TEMPERATURE_CONTROL_DTI;
+static uint16_t *control_temperature = &(dl_data.acquired_data.temperatures[0]);
+static uint32_t control_setpoint = 0;
+
 
 /**
  * @brief Initializes timer parameters.
@@ -214,7 +220,7 @@ void main(void) {
                 if (dl_data.acquired_data.status & STATUS_HEATER_ON) {
 
                     /* Compute the error between the setpoint and the actual temperature */
-                    int32_t error = control_setpoint - (int32_t) dl_data.acquired_data.temperatures[0];
+                    int32_t error = control_setpoint - (int32_t) *control_temperature;
                     
                     HEATER = (uint8_t) (pi_control_loop(&pi_controller, error) >> 14);
                 }
@@ -314,6 +320,11 @@ void main(void) {
 
             case UPLINK_RXSM:
                 uplink_rxsm_handler();
+                current_uplink_command = UPLINK_NONE;
+                break;
+
+            case UPLINK_LASER:
+                uplink_laser_handler();
                 current_uplink_command = UPLINK_NONE;
                 break;
 
@@ -555,6 +566,17 @@ void uplink_rxsm_handler(void) {
     }
 }
 
+void uplink_laser_handler(void) {
+    
+    if(uplink_options[0] == 0xFF) {
+        LASER_CONTROL = 1;
+    }
+
+    else {
+        LASER_CONTROL = 0;
+    }
+}
+
 void uplink_camera_handler(void) {
 
     if(uplink_options[0]) {
@@ -579,6 +601,23 @@ void uplink_config_handler(void) {
         default:
             break;
     }
+}
+
+int16_t abs16(int16_t a, int16_t b) {
+
+    int16_t c = a - b;
+
+    if(c < 0) {
+        c = -c;
+    }
+
+    return c;
+}
+
+uint8_t sensor_value_in_range(uint16_t value) {
+
+    return((value < TEMPERATURE_RANGE_HIGH) &&
+           (value > TEMPERATURE_RANGE_LOW));
 }
 
 void load_eeprom_data(void) {
@@ -627,7 +666,28 @@ void sods_signal_handler(void) {
 
 void soe_signal_handler(void) {
 
-    /* Compute the temperature setpoint */
+    /* Check for sensor defects and compute the temperature setpoint */
+
+    /* Verify that probes 1 and 2 do not differ from more than 4 degrees */
+    int16_t diff = abs16(dl_data.acquired_data.temperatures[0],
+                         dl_data.acquired_data.temperatures[1]);
+
+    int16_t diff1, diff2;
+
+    /* If they do, compare their value to the base of the cell */
+    if(diff > (TEMPERATURE_ONE_DEGREE << 2)) {
+        diff1 = abs16(dl_data.acquired_data.temperatures[0],
+                      dl_data.acquired_data.temperatures[2]);
+        diff2 = abs16(dl_data.acquired_data.temperatures[1],
+                      dl_data.acquired_data.temperatures[2]);
+
+        /* Use the value closest to the base of the cell as the control sensor */
+        if((diff1 > diff2) &&
+           sensor_value_in_range(dl_data.acquired_data.temperatures[0])) {
+            control_temperature = &(dl_data.acquired_data.temperatures[1]);
+        }
+    }
+
     control_setpoint = dl_data.acquired_data.temperatures[0] +
                        TEMPERATURE_CONTROL_STEP;
 
